@@ -1,0 +1,29 @@
+:host { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+.skip { position: absolute; left: -9999px; top: 8px; background: #fff; padding: 8px 12px; border-radius: 8px; z-index: 10; }
+.skip:focus { left: 8px; }
+.topbar { display: none; }
+aside { background: #fbfaf8; border-right: 1px solid var(--line); padding: 18px 14px; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.side-logo { padding: 4px 8px 14px; }
+.ws-name { padding: 0 8px 8px; margin: 0; }
+.field.compact { margin: 0 4px 10px; gap: 4px; }
+.field.compact label { font-size: 12px; color: var(--muted); }
+.field.compact select { min-height: 38px; padding: 6px 10px; }
+nav { display: flex; flex-direction: column; gap: 2px; }
+nav a { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; color: #3a3833; text-decoration: none; }
+nav a:hover { background: #f0eee9; }
+nav a.on { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+.sec { display: flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 14px 10px 4px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.me { margin-top: auto; display: flex; align-items: center; gap: 8px; padding: 12px 6px 0; border-top: 1px solid var(--line); }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-ink); display: grid; place-items: center; font-weight: 700; font-size: 13px; flex: none; }
+.who { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.who b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; }
+main { min-width: 0; outline: none; }
+
+@media (max-width: 900px) {
+  :host { grid-template-columns: 1fr; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); background: #fbfaf8; position: sticky; top: 0; z-index: 5; }
+  .side-logo { display: none; }
+  aside { display: none; position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  :host(.menu-open) aside { display: flex; }
+}

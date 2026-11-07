@@ -1,0 +1,23 @@
+{
+  "name": "marketing-pilot-worker",
+  "private": true,
+  "type": "module",
+  "description": "Worker: uzima poslove iz reda (tabela jobs) i pokreće agente.",
+  "engines": {
+    "node": ">=23.6"
+  },
+  "scripts": {
+    "start": "node src/index.ts",
+    "dev": "node --watch src/index.ts",
+    "check": "tsc --noEmit",
+    "test": "node --test src/**/*.test.ts"
+  },
+  "dependencies": {
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
+    "typescript": "^7.0.2"
+  }
+}

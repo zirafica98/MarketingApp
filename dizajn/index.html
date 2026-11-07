@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="sr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marketing Pilot — dizajn</title>
+<style>
+  :root{
+    --bg:#f6f5f2; --panel:#fff; --ink:#1c1b19; --muted:#6b6862; --line:#e7e4de;
+    --accent:#4b3fd1; --accent-soft:#eeecfd; --ok:#1f7a4d; --ok-soft:#e5f4ec;
+    --warn:#a35d00; --warn-soft:#fdf1df; --bad:#b3261e; --bad-soft:#fbe9e7;
+    --brand:#d9677f; --brand-soft:#fbeef1;
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+  button{font:inherit;cursor:pointer}
+  .app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+  /* sidebar */
+  aside{background:#fbfaf8;border-right:1px solid var(--line);padding:18px 14px;display:flex;flex-direction:column;gap:6px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;padding:4px 8px 14px}
+  .logo i{width:28px;height:28px;border-radius:8px;background:var(--accent);display:grid;place-items:center;color:#fff;font-style:normal;font-size:15px}
+  .brand-switch{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff;margin-bottom:12px}
+  .brand-switch .av{width:32px;height:32px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-weight:700}
+  .brand-switch small{display:block;color:var(--muted);font-size:12px}
+  nav button{all:unset;display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;padding:9px 10px;border-radius:10px;color:#3a3833;cursor:pointer}
+  nav button:hover{background:#f0eee9}
+  nav button[aria-current="page"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+  nav .count{margin-left:auto;background:var(--accent);color:#fff;border-radius:99px;font-size:12px;padding:1px 8px}
+  nav .sec{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:14px 10px 4px}
+  .side-foot{margin-top:auto;font-size:12px;color:var(--muted);padding:10px;border-top:1px solid var(--line)}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:6px}
+  /* main */
+  main{padding:28px 36px 60px;max-width:1240px}
+  header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:22px}
+  h1{font-size:26px;margin:0 0 4px;letter-spacing:-.01em}
+  h2{font-size:17px;margin:0 0 12px}
+  h3{font-size:15px;margin:0 0 6px}
+  .sub{color:var(--muted);margin:0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 14px;font-weight:600}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+  .btn.ghost{background:transparent}
+  .btn.bad{color:var(--bad)}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:99px;padding:2px 10px;background:#f0eee9;color:#4a4740}
+  .pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.warn{background:var(--warn-soft);color:var(--warn)}
+  .pill.bad{background:var(--bad-soft);color:var(--bad)}.pill.ac{background:var(--accent-soft);color:var(--accent)}
+  .muted{color:var(--muted)} .small{font-size:13px}
+  .screen{display:none}.screen.on{display:block}
+  .row{display:flex;align-items:center;gap:10px}
+  .between{justify-content:space-between}
+  hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+  /* steps */
+  .steps{display:flex;gap:8px;margin-bottom:20px}
+  .steps div{flex:1;padding:10px 12px;border-radius:10px;background:#fff;border:1px solid var(--line);font-size:13px;color:var(--muted)}
+  .steps div b{display:block;color:var(--ink);font-size:14px}
+  .steps .done{border-color:var(--ok);background:var(--ok-soft)} .steps .cur{border-color:var(--accent);background:var(--accent-soft)}
+  /* connect */
+  .src{display:flex;gap:14px;align-items:flex-start}
+  .src .ic{width:40px;height:40px;border-radius:10px;background:#f0eee9;display:grid;place-items:center;font-size:20px;flex:none}
+  .log{font:12.5px/1.7 ui-monospace,Menlo,monospace;background:#1d1c1a;color:#d8d5ce;border-radius:12px;padding:14px 16px;max-height:250px;overflow:auto}
+  .log .k{color:#9e98ff}.log .g{color:#7fd4a4}
+  .bar{height:6px;background:#eceae5;border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--accent)}
+  /* chat */
+  .chat{display:flex;flex-direction:column;gap:12px;max-width:760px}
+  .msg{max-width:78%;padding:12px 14px;border-radius:14px;background:#fff;border:1px solid var(--line)}
+  .msg.me{align-self:flex-end;background:var(--accent);color:#fff;border-color:var(--accent)}
+  .msg .who{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:4px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .chips button{border:1px solid var(--line);background:#faf9f7;border-radius:99px;padding:4px 12px;font-size:13px}
+  .composer{display:flex;gap:8px;margin-top:8px;max-width:760px}
+  .composer input{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font:inherit}
+  /* facts */
+  .fact{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
+  .fact:last-child{border:0}
+  .fact .t{flex:1}
+  .src-link{font-size:12px;color:var(--accent);text-decoration:none}
+  .tag{display:inline-block;font-size:12px;padding:3px 10px;border-radius:8px;background:#f3f1ec;margin:0 6px 6px 0}
+  .tag.no{background:var(--bad-soft);color:var(--bad)}
+  /* strategy */
+  .score{font-size:30px;font-weight:700}
+  .pillar{border-left:4px solid var(--accent);padding:4px 0 4px 12px;margin-bottom:12px}
+  .week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+  .day{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;min-height:96px;font-size:13px}
+  .day b{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+  .slot{border-radius:8px;padding:6px 8px;margin-bottom:6px;font-size:12.5px;line-height:1.35}
+  .s1{background:var(--brand-soft);color:#8e3046}.s2{background:var(--accent-soft);color:#3a2fb0}.s3{background:#e8f3fb;color:#1f5a85}.s4{background:#fff4dc;color:#7a5200}
+  .exp{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}.exp:last-child{border:0}
+  /* review */
+  .review{display:grid;grid-template-columns:330px 1fr;gap:18px}
+  .qitem{display:flex;gap:12px;padding:12px;border-radius:12px;cursor:pointer;border:1px solid transparent}
+  .qitem:hover{background:#faf9f7}
+  .qitem.sel{background:#fff;border-color:var(--accent);box-shadow:0 1px 0 var(--line)}
+  .thumb{width:54px;height:66px;border-radius:8px;flex:none;background:linear-gradient(160deg,#fbe4ea,#f6c9d4);display:grid;place-items:center;font-size:20px}
+  .detail{display:grid;grid-template-columns:330px 1fr;gap:20px}
+  .phone{background:#111;border-radius:30px;padding:10px;width:310px}
+  .phone .scr{background:#fff;border-radius:22px;overflow:hidden}
+  .ig-h{display:flex;align-items:center;gap:8px;padding:10px 12px;font-size:13px;font-weight:600}
+  .ig-h .av{width:26px;height:26px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-size:12px}
+  .slide{aspect-ratio:4/5;background:linear-gradient(170deg,#fff5f7 0%,#fbe1e8 100%);padding:22px 20px;display:flex;flex-direction:column;position:relative}
+  .slide .wk{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--brand);font-weight:700}
+  .slide .big{font-size:25px;font-weight:800;line-height:1.15;margin:10px 0 12px;color:#4a1f2b}
+  .slide .fruit{font-size:64px;text-align:center;margin:auto 0}
+  .slide .ln{font-size:13px;color:#6d4450;line-height:1.45}
+  .slide .ft{margin-top:auto;font-size:11px;color:#b36b7d;display:flex;justify-content:space-between}
+  .dots{display:flex;justify-content:center;gap:4px;padding:8px}.dots i{width:6px;height:6px;border-radius:50%;background:#d6d3cd}.dots i.a{background:var(--accent)}
+  .cap{padding:0 12px 14px;font-size:12.5px;line-height:1.45}
+  textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit;resize:vertical}
+  .tabs{display:flex;gap:4px;margin-bottom:10px}
+  .tabs button{border:0;background:transparent;padding:6px 12px;border-radius:8px;font-weight:600;color:var(--muted)}
+  .tabs button.a{background:#f0eee9;color:var(--ink)}
+  .check{display:flex;gap:8px;font-size:13.5px;padding:5px 0}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .fix{display:flex;gap:8px;margin-top:10px}
+  .fix input{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit}
+  /* calendar */
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+  .cal .day{min-height:150px}
+  .post{display:flex;gap:6px;align-items:center;border-radius:8px;padding:6px;margin-bottom:6px;font-size:12px;border:1px solid var(--line);background:#fff}
+  .post .mini{width:24px;height:30px;border-radius:5px;background:linear-gradient(160deg,#fbe4ea,#f6c9d4);flex:none}
+  .post.pub{border-left:3px solid var(--ok)}.post.sch{border-left:3px solid var(--accent)}.post.rev{border-left:3px solid var(--warn)}
+  /* stats */
+  .kpi .v{font-size:26px;font-weight:700}.kpi .d{font-size:12.5px}
+  .up{color:var(--ok)}.down{color:var(--bad)}
+  .bars{display:flex;align-items:flex-end;gap:14px;height:150px;padding-top:10px}
+  .bars div{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+  .bars span{width:100%;border-radius:8px 8px 0 0;background:var(--accent)}
+  .note{background:var(--accent-soft);border-radius:12px;padding:14px 16px;font-size:14px}
+  /* brands home */
+  .bcard{display:flex;flex-direction:column;gap:12px}
+  .bcard .hd{display:flex;align-items:center;gap:12px}
+  .bav{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-weight:800;color:#fff}
+  .chan{display:flex;gap:6px;flex-wrap:wrap}
+  .ch{font-size:12px;padding:3px 8px;border-radius:8px;background:#f3f1ec}
+  .ch.ok::before{content:"● ";color:var(--ok)}.ch.warn::before{content:"● ";color:var(--warn)}.ch.bad::before{content:"● ";color:var(--bad)}.ch.man::before{content:"◌ ";color:var(--muted)}
+  .mini-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:12px;color:var(--muted)}
+  .mini-kpi b{display:block;font-size:17px;color:var(--ink)}
+  .newb{border:2px dashed var(--line);display:grid;place-items:center;text-align:center;color:var(--muted);min-height:220px}
+  /* questionnaire */
+  .q-wrap{display:grid;grid-template-columns:220px 1fr;gap:20px}
+  .q-nav div{padding:8px 10px;border-radius:9px;font-size:14px;color:var(--muted);display:flex;justify-content:space-between}
+  .q-nav .d{color:var(--ok)}.q-nav .c{background:var(--accent-soft);color:var(--accent);font-weight:600}
+  .field{margin-bottom:16px}.field label{display:block;font-weight:600;margin-bottom:6px}
+  .field input,.field select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;background:#fff}
+  .suggest{background:var(--accent-soft);border-radius:10px;padding:10px 12px;font-size:13.5px;margin-top:6px}
+  .suggest b{color:var(--accent)}
+  .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .opt{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#fff;font-size:14px}
+  .opt.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
+  .progress-top{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+  .progress-top .bar{flex:1}
+  /* connectors */
+  .conn-wrap{display:grid;grid-template-columns:1fr 360px;gap:18px}
+  .conn-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .conn{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
+  .conn.sel{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .conn .top{display:flex;align-items:center;gap:10px}
+  .logo-c{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:14px;flex:none}
+  .conn p{margin:0;font-size:12.5px;color:var(--muted)}
+  .grp{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
+  .guide{position:sticky;top:20px}
+  .gstep{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .gstep:last-child{border:0}
+  .gnum{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;flex:none;background:#f0eee9}
+  .gnum.ok{background:var(--ok);color:#fff}.gnum.bad{background:var(--bad);color:#fff}
+  .shot{margin-top:8px;border:1px solid var(--line);border-radius:8px;background:#faf9f7;height:70px;display:grid;place-items:center;font-size:12px;color:var(--muted)}
+  /* analytics */
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+  .seg button{border:0;background:transparent;padding:7px 12px;font-weight:600;color:var(--muted)}
+  .seg button.a{background:#f0eee9;color:var(--ink)}
+  .line{width:100%;height:160px}
+  table.posts{width:100%;border-collapse:collapse;font-size:13.5px}
+  table.posts th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:8px 6px;border-bottom:1px solid var(--line)}
+  table.posts td{padding:9px 6px;border-bottom:1px solid var(--line)}
+  .rule{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:flex-start}
+  .rule:last-child{border:0}
+  .conf{font-size:12px;font-weight:700;border-radius:8px;padding:2px 8px;white-space:nowrap}
+  .conf.s{background:var(--ok-soft);color:var(--ok)}.conf.p{background:var(--warn-soft);color:var(--warn)}.conf.x{background:var(--bad-soft);color:var(--bad)}.conf.u{background:#f0eee9;color:#4a4740}
+  .ev{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .rule .ra{margin-left:auto;display:flex;gap:6px}
+  .rule .ra button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:3px 8px;font-size:12px}
+  .expbar{display:flex;height:22px;border-radius:7px;overflow:hidden;font-size:11.5px;color:#fff;font-weight:600}
+  .expbar span{display:grid;place-items:center}
+  @media (max-width:1000px){.app{grid-template-columns:1fr}aside{display:none}.g2,.g3,.g4,.review,.detail{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="logo"><i>✦</i> Marketing Pilot</div>
+    <div class="brand-switch" title="Promeni brend"><div class="av">DT</div><div style="flex:1"><b>Dnevnik trudnoće</b><small>Radni prostor: Mihajlo</small></div><span class="muted">⌄</span></div>
+    <nav aria-label="Glavni meni">
+      <button data-s="brendovi">🏠 Moji brendovi</button>
+      <div class="sec">Postavka brenda</div>
+      <button data-s="upitnik">📝 Upitnik o poslovanju</button>
+      <button data-s="povezi">🔗 Konektori</button>
+      <button data-s="razgovor">💬 Razgovor sa agentom</button>
+      <button data-s="profil">🪪 Brend profil</button>
+      <button data-s="strategija">🧭 Strategija</button>
+      <div class="sec">Svaki dan</div>
+      <button data-s="pregled" aria-current="page">✅ Za pregled <span class="count">4</span></button>
+      <button data-s="kalendar">🗓 Kalendar</button>
+      <button data-s="statistika">📈 Analitika</button>
+      <button data-s="pravila">🧠 Šta radi za ovaj brend</button>
+      <div class="sec">Podešavanja</div>
+      <button data-s="agenti">🤖 Agenti i modeli</button>
+      <button data-s="tim">👥 Tim i uloge</button>
+    </nav>
+    <div class="side-foot"><span class="dot"></span>Claude · tvoja pretplata<br>Instagram @dnevniktrudnoce povezan</div>
+  </aside>
+
+  <main>
+    <!-- MOJI BRENDOVI -->
+    <section class="screen" id="brendovi">
+      <header class="top"><div><h1>Moji brendovi</h1><p class="sub">Radni prostor „Mihajlo“ · 3 brenda · 2 člana</p></div>
+        <button class="btn primary">+ Novi brend</button></header>
+      <div class="grid g3">
+        <div class="card bcard">
+          <div class="hd"><div class="bav" style="background:var(--brand)">DT</div><div><b>Dnevnik trudnoće</b><div class="small muted">Aplikacija · Srbija</div></div></div>
+          <div class="chan"><span class="ch ok">Instagram</span><span class="ch ok">Facebook</span><span class="ch ok">Sajt</span><span class="ch ok">GitHub</span><span class="ch man">TikTok · ručno</span></div>
+          <div class="mini-kpi"><div><b>4</b>za pregled</div><div><b>+164</b>pratilaca/4 ned.</div><div><b>71%</b>odobreno odmah</div></div>
+          <div class="small">Sledeća objava: <b>pon 20:30</b> · Nedelja 14</div>
+        </div>
+        <div class="card bcard">
+          <div class="hd"><div class="bav" style="background:#1d1c1a">K</div><div><b>Korak Sneakers</b><div class="small muted">Prodavnica patika · Shopify</div></div></div>
+          <div class="chan"><span class="ch ok">Instagram</span><span class="ch ok">Shopify</span><span class="ch warn">TikTok · token ističe</span><span class="ch ok">GA4</span></div>
+          <div class="mini-kpi"><div><b>7</b>za pregled</div><div><b>312</b>porudžbina sa mreža</div><div><b>2,8×</b>Reels &gt; foto</div></div>
+          <div class="small">Kampanja: <b>Black Friday</b> · počinje za 21 dan</div>
+        </div>
+        <div class="card bcard">
+          <div class="hd"><div class="bav" style="background:#4b3fd1">AI</div><div><b>AI Morning Brief</b><div class="small muted">Medijski brend</div></div></div>
+          <div class="chan"><span class="ch ok">Instagram</span><span class="ch ok">YouTube</span><span class="ch ok">Threads</span><span class="ch bad">Telegram · veza pukla</span></div>
+          <div class="mini-kpi"><div><b>0</b>za pregled</div><div><b>+9%</b>doseg</div><div><b>Wars</b>najbolji format</div></div>
+          <div class="small" style="color:var(--bad)">Telegram: poveži ponovo →</div>
+        </div>
+        <div class="card bcard" style="grid-column:span 2">
+          <div class="row between"><h2 style="margin:0">Onboarding: Korak Sneakers</h2><span class="pill ac">80% gotovo</span></div>
+          <div class="bar"><i style="width:80%"></i></div>
+          <div class="small">✅ Upitnik &nbsp; ✅ Instagram, Shopify, GA4 &nbsp; ✅ Strategija &nbsp; ⬜ <b>Fotografije proizvoda na nozi</b> (Učitelj: Reels sa njima prolaze najbolje) &nbsp; ⬜ Facebook stranica</div>
+        </div>
+        <div class="card newb"><div><div style="font-size:28px">＋</div><b>Novi brend</b><div class="small">Unesi sajt ili Instagram, ostalo popunjavamo zajedno</div></div></div>
+      </div>
+    </section>
+
+    <!-- UPITNIK -->
+    <section class="screen" id="upitnik">
+      <div class="progress-top"><span class="small muted">Novi brend · Korak Sneakers</span><div class="bar"><i style="width:45%"></i></div><span class="small muted">korak 3 od 7</span></div>
+      <div class="q-wrap">
+        <div class="card q-nav" style="padding:10px">
+          <div class="d">Brzi početak <span>✓</span></div><div class="d">Posao <span>✓</span></div><div class="c">Kupci <span>●</span></div>
+          <div>Konkurencija</div><div>Glas brenda</div><div>Vizuelni identitet</div><div>Ciljevi i datumi</div><div>Pravila i zabrane</div><div>Resursi i odobravanje</div>
+        </div>
+        <div class="card">
+          <h1 style="font-size:22px">Ko kupuje tvoje patike?</h1>
+          <p class="sub" style="margin-bottom:18px">Dok ovo popunjavaš, agent čita korak.rs i @korak.sneakers. Predlozi su ispod polja — prihvati ili ispravi.</p>
+          <div class="field"><label>Godine kupaca</label><div class="opts"><span class="opt">do 18</span><span class="opt on">18–24</span><span class="opt on">25–34</span><span class="opt">35–44</span><span class="opt">45+</span></div>
+            <div class="suggest"><b>Predlog:</b> 64% pratilaca na Instagramu ima 18–34 godine. ✓ označeno</div></div>
+          <div class="field"><label>Koji problem im rešavaš?</label><input value="Limitirani modeli koji se teško nalaze u Srbiji, sa dostavom za 24h">
+            <div class="suggest"><b>Sa sajta:</b> „Originalni modeli, dostava za 24h, povrat 30 dana“ — dodati povrat?</div></div>
+          <div class="field"><label>Najčešća pitanja kupaca</label><input value="Da li je original? Kako stoji broj? Koliko traje dostava?">
+            <div class="suggest"><b>Iz komentara (60 objava):</b> „broj“ se pominje 41 put → predlažem stub „Kako da izabereš broj“</div></div>
+          <div class="field"><label>Gde žive</label><select><option>Cela Srbija, najviše Beograd i Novi Sad</option></select></div>
+          <div class="row between" style="margin-top:20px"><button class="btn ghost">← Nazad</button><div class="row"><button class="btn ghost">Preskoči, kasnije</button><button class="btn primary">Dalje: Konkurencija →</button></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KONEKTORI -->
+    <section class="screen" id="povezi">
+      <header class="top"><div><h1>Konektori</h1><p class="sub">Poveži kanale ovog brenda. Klikneš „Poveži“, prijaviš se na mrežu i to je to — uputstvo je desno.</p></div>
+        <div class="seg"><button class="a">Sve</button><button>Povezano (5)</button><button>Mreže</button><button>Prodaja</button><button>Analitika</button></div></header>
+      <div class="conn-wrap">
+        <div>
+          <div class="grp" style="margin-top:0">Društvene mreže</div>
+          <div class="conn-grid">
+            <div class="conn sel"><div class="top"><div class="logo-c" style="background:linear-gradient(45deg,#f9a03f,#d62976,#7b2fbf)">IG</div><b>Instagram</b></div><p>Objave, Reels, priče · statistika · komentari</p><button class="btn primary">Poveži</button></div>
+            <div class="conn"><div class="top"><div class="logo-c" style="background:#1877f2">f</div><b>Facebook stranica</b></div><p>Postovi i Reels · statistika</p><span class="pill ok">Povezano · Dnevnik trudnoće</span></div>
+            <div class="conn"><div class="top"><div class="logo-c" style="background:#000">@</div><b>Threads</b></div><p>Tekst i slike</p><button class="btn">Poveži</button></div>
+            <div class="conn"><div class="top"><div class="logo-c" style="background:#111">♪</div><b>TikTok</b></div><p>Video i foto karusel</p><span class="pill">Ručni režim dok čekamo odobrenje</span></div>
+            <div class="conn"><div class="top"><div class="logo-c" style="background:#ff0000">▶</div><b>YouTube</b></div><p>Shorts i video · statistika</p><button class="btn">Poveži</button></div>
+            <div class="conn"><div class="top"><div class="logo-c" style="background:#0a66c2">in</div><b>LinkedIn</b></div><p>Stranica firme</p><button class="btn">Poveži</button></div>
+            <div class="conn"><div class="top"><div class="logo-c" style="background:#e60023">P</div><b>Pinterest</b></div><p>Pinovi · statistika</p><button class="btn">Poveži</button></div>
+            <div class="conn"><div class="top"><div class="logo-c" style="background:#229ed9">✈</div><b>Telegram</b></div><p>Kanal · objave i albumi</p><button class="btn">Poveži</button></div>
+            <div class="conn"><div class="top"><div class="logo-c" style="background:#000">X</div><b>X</b></div><p>Pripremamo, ti objaviš u 2 klika</p><span class="pill">Ručni režim</span></div>
+          </div>
+          <div class="grp">Prodaja i sadržaj</div>
+          <div class="conn-grid">
+            <div class="conn"><div class="top"><div class="logo-c" style="background:#5e8e3e">S</div><b>Shopify</b></div><p>Proizvodi, cene, slike, prodaja</p><button class="btn">Poveži</button></div>
+            <div class="conn"><div class="top"><div class="logo-c" style="background:#7f54b3">W</div><b>WooCommerce</b></div><p>Proizvodi i porudžbine</p><button class="btn">Poveži</button></div>
+            <div class="conn"><div class="top"><div class="logo-c" style="background:#6b6862">🌐</div><b>Sajt</b></div><p>Sadržaj, boje, logo</p><span class="pill ok">dnevniktrudnoce.com</span></div>
+            <div class="conn"><div class="top"><div class="logo-c" style="background:#24292f">⌥</div><b>GitHub</b></div><p>Funkcije i sadržaj app-a</p><span class="pill ok">rastemo-web</span></div>
+            <div class="conn"><div class="top"><div class="logo-c" style="background:#1fa463">▲</div><b>Google Drive</b></div><p>Fotografije i video brenda</p><button class="btn">Poveži</button></div>
+            <div class="conn"><div class="top"><div class="logo-c" style="background:#4285f4">G</div><b>Google Business</b></div><p>Recenzije, objave za lokal</p><button class="btn">Poveži</button></div>
+          </div>
+          <div class="grp">Analitika i mejl</div>
+          <div class="conn-grid">
+            <div class="conn"><div class="top"><div class="logo-c" style="background:#e37400">GA</div><b>Google Analytics 4</b></div><p>Posete i prodaja sa mreža</p><span class="pill ok">Povezano</span></div>
+            <div class="conn"><div class="top"><div class="logo-c" style="background:#458cf5">SC</div><b>Search Console</b></div><p>Pretrage na Google-u</p><button class="btn">Poveži</button></div>
+            <div class="conn"><div class="top"><div class="logo-c" style="background:#ffe01b;color:#000">M</div><b>Mailchimp / Brevo</b></div><p>Liste i newsletter</p><button class="btn">Poveži</button></div>
+          </div>
+        </div>
+        <div class="card guide">
+          <div class="row"><div class="logo-c" style="background:linear-gradient(45deg,#f9a03f,#d62976,#7b2fbf)">IG</div><div><b>Povezivanje Instagrama</b><div class="small muted">oko 3 minuta</div></div></div>
+          <p class="small" style="margin:12px 0 4px">Proveravamo svaki korak automatski.</p>
+          <div class="gstep"><span class="gnum ok">✓</span><div>Instagram nalog je <b>poslovni ili kreator</b></div></div>
+          <div class="gstep"><span class="gnum bad">!</span><div><b>Nalog nije vezan za Facebook stranicu.</b><br><span class="small muted">Instagram → Podešavanja → Nalozi centar → Dodaj Facebook stranicu.</span><div class="shot">[snimak ekrana sa strelicom]</div><button class="btn" style="margin-top:8px">Proveri ponovo</button></div></div>
+          <div class="gstep"><span class="gnum">3</span><div>Klikni <b>Poveži</b> i prijavi se na Instagram</div></div>
+          <div class="gstep"><span class="gnum">4</span><div>Dozvoli: objavljivanje, statistika, komentari<br><span class="small muted">Zašto nam treba svaka dozvola →</span></div></div>
+          <div class="gstep"><span class="gnum">5</span><div>Uvlačimo poslednjih 6 meseci objava i statistike, da Učitelj vidi šta je prolazilo</div></div>
+          <hr><div class="small muted">Ne ide? <a class="src-link" href="#">Pogledaj video (1 min)</a> · <a class="src-link" href="#">Pitaj pomoć</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. RAZGOVOR -->
+    <section class="screen" id="razgovor">
+      <header class="top"><div><h1>Razgovor sa agentom</h1><p class="sub">Pita samo ono što nije mogao sam da zaključi. Pitanje 3 od 7.</p></div>
+        <button class="btn ghost">Preskoči za sada</button></header>
+      <div class="chat">
+        <div class="msg"><div class="who">Intervjuer</div>Proučio sam sajt, kod aplikacije i 60 objava. Video sam da najbolje prolaze karuseli „nedelja po nedelja“. Imam 7 kratkih pitanja.</div>
+        <div class="msg"><div class="who">Intervjuer</div>Koliko često realno možete da odobravate objave?
+          <div class="chips"><button>Svaki dan</button><button>2–3 puta nedeljno</button><button>Jednom nedeljno, sve odjednom</button></div></div>
+        <div class="msg me">Jednom nedeljno, nedeljom uveče.</div>
+        <div class="msg"><div class="who">Intervjuer</div>Odlično, praviću nacrte za celu sledeću nedelju u subotu. <br><br>Postoje li teme koje <b>nikad</b> ne smemo da objavimo? Na primer: lekovi i doze, gubitak trudnoće, poređenje sa drugim aplikacijama.
+          <div class="chips"><button>Lekovi i doze</button><button>Gubitak trudnoće</button><button>Konkurencija</button><button>Politika</button></div></div>
+        <div class="msg me">Lekovi i doze, i ništa što plaši. Gubitak trudnoće samo ako je nežno i sa podrškom.</div>
+        <div class="msg"><div class="who">Intervjuer</div>Upisano u zabrane brenda ✓ <br><br>Šta ti je najvažniji cilj za sledeća 3 meseca?
+          <div class="chips"><button>Više registracija u app</button><button>Više pratilaca</button><button>Zajednica i poverenje</button></div></div>
+      </div>
+      <div class="composer"><input placeholder="Napiši odgovor…" aria-label="Odgovor"><button class="btn primary">Pošalji</button></div>
+    </section>
+
+    <!-- 3. PROFIL -->
+    <section class="screen" id="profil">
+      <header class="top"><div><h1>Brend profil</h1><p class="sub">Sve što agenti znaju o tvom proizvodu. Svaka činjenica ima izvor. Ispravi šta nije tačno.</p></div>
+        <button class="btn primary">Potvrdi profil</button></header>
+      <div class="grid g2">
+        <div class="card"><h2>Publika</h2><p>Trudnice i mlade mame u Srbiji, 22–38 godina. Prate trudnoću nedelju po nedelju i traže proverene, jednostavne informacije na srpskom.</p>
+          <p class="small muted">Iz: sajt, razgovor · <a class="src-link" href="#">izmeni</a></p></div>
+        <div class="card"><h2>Ton</h2><p>Topao, smiren i ohrabrujući, kao iskusna drugarica. „Ti“ u ženskom rodu. Bez straha i preuveličavanja.</p>
+          <div><span class="tag">topao</span><span class="tag">jednostavan</span><span class="tag">bez žargona</span></div></div>
+        <div class="card"><h2>Zabrane</h2>
+          <span class="tag no">lekovi i doze</span><span class="tag no">medicinski saveti van sadržaja app-a</span><span class="tag no">ništa što plaši</span><span class="tag no">više od 3 emodžija</span>
+          <p class="small muted">Urednik odbija svaki nacrt koji ovo prekrši.</p></div>
+        <div class="card"><h2>Ciljevi</h2><p>1. Više registracija u app (glavni)<br>2. Poverenje: privatnost podataka kao prednost</p><p class="small muted">Iz razgovora, 7. 11.</p></div>
+      </div>
+      <div class="card" style="margin-top:16px"><div class="row between"><h2>Činjenice o proizvodu</h2><span class="pill">22 · 18 potvrđeno</span></div>
+        <div class="fact"><span class="pill ok">✓</span><div class="t">Razvoj bebe za svaku nedelju od 4. do 42.<br><a class="src-link" href="#">repo: src/app/nedelje/nedelje.json</a></div></div>
+        <div class="fact"><span class="pill ok">✓</span><div class="t">60 porodilišta u Srbiji sa adresama i telefonima<br><a class="src-link" href="#">dnevniktrudnoce.com/porodilista</a></div></div>
+        <div class="fact"><span class="pill ok">✓</span><div class="t">Podatke korisnice ne vidi niko drugi, ni administrator — pravilo u bazi<br><a class="src-link" href="#">sajt + supabase/migracije</a></div></div>
+        <div class="fact"><span class="pill warn">?</span><div class="t">Ginekolozi iz registra Lekarske komore sa ocenama korisnica<br><a class="src-link" href="#">dnevniktrudnoce.com</a> · <span class="small muted">u kodu nisam našao ocene — da li je ovo već uključeno?</span></div>
+          <button class="btn">Tačno</button><button class="btn bad">Netačno</button></div>
+      </div>
+    </section>
+
+    <!-- 4. STRATEGIJA -->
+    <section class="screen" id="strategija">
+      <header class="top"><div><h1>Strategija</h1><p class="sub">Predlog agenta Strateg. Prihvati, izmeni ili traži drugu verziju.</p></div>
+        <div class="row"><button class="btn">Druga verzija</button><button class="btn primary">Prihvati strategiju</button></div></header>
+      <div class="grid g4">
+        <div class="card kpi"><p class="small muted">Objave nedeljno</p><div class="score">2,3 → 4</div><p class="small">sada bez rasporeda</p></div>
+        <div class="card kpi"><p class="small muted">Najbolji format</p><div class="score">Karusel</div><p class="small">3,1× više sačuvanih</p></div>
+        <div class="card kpi"><p class="small muted">Link ka app-u</p><div class="score" style="color:var(--bad)">Slab</div><p class="small">bio nema poziv na akciju</p></div>
+        <div class="card kpi"><p class="small muted">Najbolje vreme</p><div class="score">20–22h</div><p class="small">publika aktivna uveče</p></div>
+      </div>
+      <div class="grid g2" style="margin-top:16px">
+        <div class="card"><h2>Stubovi sadržaja</h2>
+          <div class="pillar" style="border-color:var(--brand)"><h3>Nedelja po nedelja · 40%</h3><p class="small muted">Veličina bebe, šta se dešava, jedan savet. Sadržaj direktno iz app-a, bez izmišljanja.</p></div>
+          <div class="pillar"><h3>Funkcija app-a · 20%</h3><p class="small muted">Jedna funkcija, jedan problem koji rešava. Uvek poziv „link u bio“.</p></div>
+          <div class="pillar" style="border-color:#3b8ac4"><h3>Imena za bebe · 25%</h3><p class="small muted">Ime + poreklo + značenje. Lako se deli i čuva.</p></div>
+          <div class="pillar" style="border-color:#d99a00"><h3>Priprema · 15%</h3><p class="small muted">Torba za porodilište, porodilišta po gradovima.</p></div>
+        </div>
+        <div class="card"><h2>Eksperimenti (4 nedelje)</h2>
+          <div class="exp"><span class="pill ac">E1</span><div><b>Reel 15 s „Tvoja beba ove nedelje“</b><p class="small muted">Hipoteza: Reel donosi nove pratioce, karusel čuvanja. Meri se: pratioci po objavi.</p></div></div>
+          <div class="exp"><span class="pill ac">E2</span><div><b>Bio sa jasnim pozivom</b><p class="small muted">„Izračunaj termin za 10 s 👇“ umesto opisa. Meri se: klikovi na link.</p></div></div>
+          <div class="exp"><span class="pill ac">E3</span><div><b>Story anketa svake srede</b><p class="small muted">„U kojoj si nedelji?“ → teme za sledeću nedelju.</p></div></div>
+        </div>
+      </div>
+      <h2 style="margin-top:22px">Nedeljni raspored</h2>
+      <div class="week">
+        <div class="day"><b>PON</b><div class="slot s1">Karusel · Nedelja X</div></div>
+        <div class="day"><b>UTO</b><div class="slot s3">Ime dana</div></div>
+        <div class="day"><b>SRE</b><div class="slot s1">Reel · Nedelja X</div><div class="slot s4">Story anketa</div></div>
+        <div class="day"><b>ČET</b><div class="slot s4">Priprema</div></div>
+        <div class="day"><b>PET</b><div class="slot s2">Funkcija app-a</div></div>
+        <div class="day"><b>SUB</b><div class="slot s3">Ime dana</div></div>
+        <div class="day"><b>NED</b><div class="slot" style="background:#f0eee9">Ti odobravaš nedelju</div></div>
+      </div>
+    </section>
+
+    <!-- 5. ZA PREGLED -->
+    <section class="screen on" id="pregled">
+      <header class="top"><div><h1>Za pregled</h1><p class="sub">Ništa ne ide javno dok ne odobriš. 4 nacrta za nedelju 10–16. novembar.</p></div>
+        <button class="btn">Odobri sve koji su prošli proveru (3)</button></header>
+      <div class="review">
+        <div class="card" style="padding:8px">
+          <div class="qitem sel"><div class="thumb">🍋</div><div><b>Nedelja 14 · karusel</b><div class="small muted">pon 10. 11. · 20:30 · Instagram</div><span class="pill ok">Prošao proveru</span></div></div>
+          <div class="qitem"><div class="thumb">✨</div><div><b>Ime dana: Teodora</b><div class="small muted">uto 11. 11. · 20:30</div><span class="pill ok">Prošao proveru</span></div></div>
+          <div class="qitem"><div class="thumb">🎬</div><div><b>Reel · Nedelja 14</b><div class="small muted">sre 12. 11. · 21:00 · E1</div><span class="pill warn">Popravlja se…</span></div></div>
+          <div class="qitem"><div class="thumb">🧳</div><div><b>Torba za porodilište</b><div class="small muted">čet 13. 11. · 20:00</div><span class="pill bad">1 primedba</span></div></div>
+        </div>
+        <div class="card">
+          <div class="detail">
+            <div>
+              <div class="phone"><div class="scr">
+                <div class="ig-h"><div class="av">DT</div>dnevniktrudnoce</div>
+                <div class="slide">
+                  <div class="wk">Nedelja 14</div>
+                  <div class="big">Beba je sada veličine limuna</div>
+                  <div class="fruit">🍋</div>
+                  <div class="ln">Oko 8,7 cm i 43 g. Počinje da pravi grimase i da sisa palac.</div>
+                  <div class="ft"><span>dnevniktrudnoce.com</span><span>1/5</span></div>
+                </div>
+                <div class="dots"><i class="a"></i><i></i><i></i><i></i><i></i></div>
+                <div class="cap"><b>dnevniktrudnoce</b> Drugo tromesečje je počelo 💛 Za mnoge je ovo nedelja kad mučnina popusti i vrati se malo energije…</div>
+              </div></div>
+            </div>
+            <div>
+              <div class="row between"><h2 style="margin:0">Nedelja 14 · karusel</h2><span class="pill">stub: Nedelja po nedelja</span></div>
+              <p class="small muted">Napravio: Pisac + Dizajner · materijal: repo nedelje.json (nedelja 14)</p>
+              <div class="tabs"><button class="a">Instagram</button><button>Threads</button><button>Facebook</button></div>
+              <textarea aria-label="Opis objave">Drugo tromesečje je počelo 💛 Za mnoge je ovo nedelja kad mučnina popusti i vrati se malo energije.
+
+Beba je oko 8,7 cm i počinje da pravi prve grimase. Prelistaj šta se još menja ove nedelje 👉
+
+U kojoj si ti nedelji? Izračunaj za 10 sekundi — link u bio.
+
+#trudnoća #trudnocanedeljuponedelju #buducamama</textarea>
+              <h3 style="margin-top:14px">Provera (Urednik)</h3>
+              <div class="check">✅ Sve činjenice postoje u izvoru (veličina, težina, grimase)</div>
+              <div class="check">✅ Nema zabranjenih tema · 2 emodžija</div>
+              <div class="check">✅ Poziv na akciju ka app-u (strategija E2)</div>
+              <div class="check">ℹ️ Slično objavi od 27. 10. (nedelja 12) — dovoljno različito</div>
+              <div class="fix"><input aria-label="Uputstvo agentu" placeholder="Napiši šta da popravi, npr. „kraći uvod, bez emodžija na početku“"><button class="btn">Popravi</button></div>
+              <div class="actions">
+                <button class="btn ok">Odobri i zakaži · pon 20:30</button>
+                <button class="btn">Objavi odmah</button>
+                <button class="btn">Napravi ponovo</button>
+                <button class="btn bad">Odbij…</button>
+              </div>
+              <p class="small muted" style="margin-top:10px">Kad odbiješ, izaberi razlog (ton, netačno, dosadno, ne odgovara brendu). Agenti to pamte.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. KALENDAR -->
+    <section class="screen" id="kalendar">
+      <header class="top"><div><h1>Kalendar</h1><p class="sub">10–16. novembar 2026 · <span class="pill ok">objavljeno</span> <span class="pill ac">zakazano</span> <span class="pill warn">čeka pregled</span></p></div>
+        <div class="row"><button class="btn">← Prethodna</button><button class="btn">Sledeća →</button></div></header>
+      <div class="cal">
+        <div class="day"><b>PON 10</b><div class="post sch"><span class="mini"></span>20:30 Nedelja 14</div></div>
+        <div class="day"><b>UTO 11</b><div class="post sch"><span class="mini"></span>20:30 Ime: Teodora</div></div>
+        <div class="day"><b>SRE 12</b><div class="post rev"><span class="mini"></span>21:00 Reel N14</div><div class="post rev"><span class="mini"></span>Story anketa</div></div>
+        <div class="day"><b>ČET 13</b><div class="post rev"><span class="mini"></span>20:00 Torba</div></div>
+        <div class="day"><b>PET 14</b><div class="post sch"><span class="mini"></span>20:30 Kalkulator</div></div>
+        <div class="day"><b>SUB 15</b><div class="post sch"><span class="mini"></span>20:30 Ime: Luka</div><p class="small muted">Nacrti za sledeću nedelju se prave danas</p></div>
+        <div class="day"><b>NED 16</b><p class="small muted">Odobravanje</p></div>
+      </div>
+      <div class="card" style="margin-top:16px"><h2>Prošla nedelja</h2>
+        <div class="post pub"><span class="mini"></span>pon 3. 11. · Nedelja 13 · doseg 2.410 · 96 sačuvanih</div>
+        <div class="post pub"><span class="mini"></span>sre 5. 11. · Funkcija: Porodilišta · doseg 1.630 · 41 sačuvano</div>
+      </div>
+    </section>
+
+    <!-- ANALITIKA -->
+    <section class="screen" id="statistika">
+      <header class="top"><div><h1>Analitika</h1><p class="sub">Dnevnik trudnoće · svi kanali · poslednjih 28 dana u odnosu na prethodnih 28</p></div>
+        <div class="row"><div class="seg"><button>7 d</button><button class="a">28 d</button><button>90 d</button></div><div class="seg"><button class="a">Svi kanali</button><button>Instagram</button><button>Facebook</button></div></div></header>
+      <div class="grid g4">
+        <div class="card kpi"><p class="small muted">Pratioci</p><div class="v">3.482</div><div class="d up">▲ +164 (+4,9%)</div></div>
+        <div class="card kpi"><p class="small muted">Doseg</p><div class="v">61.900</div><div class="d up">▲ +20%</div></div>
+        <div class="card kpi"><p class="small muted">Klikovi ka app-u</p><div class="v">312</div><div class="d up">▲ 3,4× (eksperiment E2)</div></div>
+        <div class="card kpi"><p class="small muted">Nove registracije u app</p><div class="v">87</div><div class="d up">▲ +41% · cilj 120 / mes.</div></div>
+      </div>
+      <div class="grid g2" style="margin-top:16px;grid-template-columns:1.4fr 1fr">
+        <div class="card"><div class="row between"><h2 style="margin:0">Doseg po danu</h2><span class="small muted">● ovaj period &nbsp; ◌ prethodni</span></div>
+          <svg class="line" viewBox="0 0 600 160" preserveAspectRatio="none" aria-label="Grafik dosega">
+            <polyline fill="none" stroke="#d6d3cd" stroke-width="2" stroke-dasharray="4 4" points="0,120 40,115 80,118 120,110 160,112 200,105 240,108 280,100 320,104 360,98 400,101 440,95 480,99 520,92 560,96 600,90"/>
+            <polyline fill="none" stroke="#4b3fd1" stroke-width="3" points="0,110 40,100 80,104 120,85 160,92 200,70 240,78 280,64 320,72 360,48 400,60 440,40 480,52 520,30 560,42 600,22"/>
+            <circle cx="360" cy="48" r="5" fill="#4b3fd1"/><text x="368" y="42" font-size="12" fill="#4b3fd1">Reel N12</text>
+          </svg></div>
+        <div class="card"><h2>Šta je radilo, za ovaj brend</h2>
+          <div class="bars" style="height:130px">
+            <div><span style="height:110px;background:var(--brand)"></span>Karusel<br>nedelja</div>
+            <div><span style="height:96px"></span>Reel</div>
+            <div><span style="height:70px;background:#3b8ac4"></span>Ime dana</div>
+            <div><span style="height:30px;background:#d99a00"></span>Foto</div>
+          </div><p class="small muted" style="margin:6px 0 0">Čuvanja na 1.000 dosega · u odnosu na prosek brenda</p></div>
+      </div>
+      <div class="card" style="margin-top:16px"><div class="row between"><h2 style="margin:0">Objave</h2><span class="small muted">klik na objavu → sve brojke + objašnjenje agenta</span></div>
+        <table class="posts"><thead><tr><th>Objava</th><th>Kanal</th><th>Format · stub</th><th>Vreme</th><th>Doseg</th><th>Čuvanja</th><th>Klikovi</th><th>u odnosu na prosek</th></tr></thead><tbody>
+          <tr><td>Reel · Nedelja 12</td><td>IG</td><td>Reel · Nedelja</td><td>sre 21:00</td><td>6.840</td><td>212</td><td>48</td><td><span class="pill ok">▲ 2,6×</span></td></tr>
+          <tr><td>Nedelja 13 · karusel</td><td>IG</td><td>Karusel · Nedelja</td><td>pon 20:30</td><td>2.410</td><td>96</td><td>22</td><td><span class="pill ok">▲ 1,4×</span></td></tr>
+          <tr><td>Ime dana: Mila</td><td>IG + FB</td><td>Slika · Imena</td><td>uto 20:30</td><td>1.980</td><td>64</td><td>9</td><td><span class="pill">≈ prosek</span></td></tr>
+          <tr><td>Funkcija: Porodilišta</td><td>FB</td><td>Slika · Funkcija</td><td>pet 13:00</td><td>620</td><td>8</td><td>11</td><td><span class="pill bad">▼ 0,4×</span></td></tr>
+        </tbody></table></div>
+    </section>
+
+    <!-- KNJIGA PRAVILA -->
+    <section class="screen" id="pravila">
+      <header class="top"><div><h1>Šta radi za ovaj brend</h1><p class="sub">Knjiga pravila koju agent <b>Učitelj</b> piše iz analitike Dnevnika trudnoće i iz tvojih odluka. Svi agenti je čitaju pre rada.</p></div>
+        <button class="btn">Nedeljni izveštaj →</button></header>
+      <div class="grid g2" style="grid-template-columns:1.5fr 1fr">
+        <div class="card"><div class="row between"><h2 style="margin:0">Pravila</h2><div class="seg"><button class="a">Sva (9)</button><button>Sigurna</button><button>Proveravaju se</button><button>Iz tvojih odluka</button></div></div>
+          <div class="rule"><span class="conf s">sigurno</span><div><b>Reel „Nedelja X“ donosi 2,6× više novih pratilaca od karusela</b><div class="ev">11 Reels-a vs 24 karusela · 8 nedelja · iz eksperimenta E1</div></div><div class="ra"><button>🔒</button><button>✎</button></div></div>
+          <div class="rule"><span class="conf s">sigurno</span><div><b>Najbolje vreme: 20:30–21:30, radnim danom</b><div class="ev">publika najaktivnija 21h · objave posle 20h imaju +38% dosega</div></div><div class="ra"><button>🔒</button><button>✎</button></div></div>
+          <div class="rule"><span class="conf s">sigurno</span><div><b>Karusel: prvi slajd sa veličinom bebe (voće) → više čuvanja</b><div class="ev">1,9× čuvanja · 16 objava</div></div><div class="ra"><button>🔒</button><button>✎</button></div></div>
+          <div class="rule"><span class="conf p">proverava se</span><div><b>Pitanje na kraju opisa povećava komentare, ali ne i doseg</b><div class="ev">5 objava · eksperiment E4 traje još 9 dana</div></div><div class="ra"><button>✎</button><button>✕</button></div></div>
+          <div class="rule"><span class="conf u">tvoja odluka</span><div><b>Bez emodžija na početku opisa</b><div class="ev">iz 4 tvoje izmene · važi uvek</div></div><div class="ra"><button>🔒</button><button>✕</button></div></div>
+          <div class="rule"><span class="conf u">tvoja odluka</span><div><b>Imena: uvek i nadimak, ne samo poreklo</b><div class="ev">2 odbijanja sa razlogom „dosadno“</div></div><div class="ra"><button>🔒</button><button>✕</button></div></div>
+          <div class="rule"><span class="conf x">odbačeno</span><div><b>Facebook u podne kao Instagram</b><div class="ev">FB publika ima 0,4× dosega u 13h → FB prebačen na 20h</div></div><div class="ra"><button>✕</button></div></div>
+        </div>
+        <div>
+          <div class="card"><h2>Eksperimenti u toku</h2>
+            <p style="margin:0 0 6px"><b>E4 · Pitanje na kraju opisa</b></p>
+            <div class="expbar"><span style="flex:62;background:var(--accent)">sa pitanjem 62</span><span style="flex:38;background:#a9a4f0">bez 38</span></div>
+            <p class="small muted">komentara na objavu · još 9 dana · 5 od 10 objava</p>
+            <hr><p style="margin:0 0 6px"><b>E5 · Priča sa anketom sredom</b></p>
+            <div class="expbar"><span style="flex:50;background:#d6d3cd;color:var(--ink)">čeka prvu objavu</span></div>
+          </div>
+          <div class="note" style="margin-top:16px"><b>Predlog Učitelja za sledeći mesec</b><br>Reel „Nedelja X“ postaje stalni format sredom, „Priprema“ ide jednom u dve nedelje, Facebook objave u 20h.
+            <div class="row" style="margin-top:10px"><button class="btn primary">Primeni na strategiju</button><button class="btn">Pogledaj razlike</button></div></div>
+          <div class="card" style="margin-top:16px"><h3>Kako je ovo drugačije od Korak Sneakers?</h3><p class="small muted" style="margin:0">Kod Korak-a najbolje prolaze Reels sa proizvodom na nozi u 18h i objave sa cenom. Svaki brend ima svoja pravila — podaci se ne mešaju.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TIM -->
+    <section class="screen" id="tim">
+      <header class="top"><div><h1>Tim i uloge</h1><p class="sub">Radni prostor „Mihajlo“ · ko šta sme, po brendu</p></div><button class="btn primary">+ Pozovi člana</button></header>
+      <div class="card"><table class="posts"><thead><tr><th>Član</th><th>Uloga</th><th>Brendovi</th><th></th></tr></thead><tbody>
+        <tr><td><b>Mihajlo</b><div class="small muted">mihajlo@…</div></td><td><span class="pill ac">Vlasnik</span></td><td>svi</td><td></td></tr>
+        <tr><td><b>Supruga</b><div class="small muted">pozvana 7. 11.</div></td><td><span class="pill">Urednik + odobrava</span></td><td>Dnevnik trudnoće</td><td><button class="btn">Izmeni</button></td></tr>
+        <tr><td><b>Pera Perić</b><div class="small muted">klijent</div></td><td><span class="pill">Odobrava</span></td><td>Korak Sneakers</td><td><button class="btn">Izmeni</button></td></tr>
+      </tbody></table>
+      <p class="small muted" style="margin:12px 0 0">Vlasnik · Admin · Urednik · Odobrava · Posmatrač. Pravila važe u bazi, ne samo u aplikaciji.</p></div>
+    </section>
+
+    <!-- 8. AGENTI -->
+    <section class="screen" id="agenti">
+      <header class="top"><div><h1>Agenti i modeli</h1><p class="sub">Za početak sve radi preko tvoje Claude pretplate. Kasnije: sopstveni API ključ i izbor modela po agentu.</p></div></header>
+      <div class="card"><div class="row between"><div><h2 style="margin:0">AI nalog</h2><p class="small muted">Claude Code OAuth token (claude setup-token) · samo za tvoje brendove</p></div><span class="pill ok">Povezan</span></div>
+        <hr><div class="row"><button class="btn">+ Sopstveni API ključ</button><span class="small muted">Anthropic sada · drugi provajderi kasnije</span></div></div>
+      <div class="grid g3" style="margin-top:16px">
+        <div class="card"><h3>🔎 Istraživač</h3><p class="small muted">Čita sajt, kod i Instagram.</p><span class="pill">Sonnet</span></div>
+        <div class="card"><h3>💬 Intervjuer</h3><p class="small muted">Pita samo ono što ne zna.</p><span class="pill">Sonnet</span></div>
+        <div class="card"><h3>🧭 Strateg</h3><p class="small muted">Revizija, stubovi, raspored.</p><span class="pill ac">Opus</span></div>
+        <div class="card"><h3>✍️ Pisac</h3><p class="small muted">Tekstovi slajdova i opisi.</p><span class="pill ac">Opus</span></div>
+        <div class="card"><h3>🧐 Urednik</h3><p class="small muted">Činjenice, zabrane, ponavljanja.</p><span class="pill">Sonnet</span></div>
+        <div class="card"><h3>📊 Analitičar</h3><p class="small muted">Nedeljni izveštaj i predlozi.</p><span class="pill">Sonnet</span></div>
+        <div class="card"><h3>🧠 Učitelj</h3><p class="small muted">Uči iz analitike i tvojih odluka, piše knjigu pravila brenda.</p><span class="pill ac">Opus</span></div>
+      </div>
+    </section>
+  </main>
+</div>
+<script>
+  const dugmad = document.querySelectorAll('nav button[data-s]');
+  function prikazi(id){
+    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id));
+    dugmad.forEach(b => b.dataset.s === id ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
+    history.replaceState(null, '', '#' + id);
+    window.scrollTo(0, 0);
+  }
+  dugmad.forEach(b => b.addEventListener('click', () => prikazi(b.dataset.s)));
+  document.querySelectorAll('.qitem').forEach(q => q.addEventListener('click', () => {
+    document.querySelectorAll('.qitem').forEach(x => x.classList.remove('sel')); q.classList.add('sel');
+  }));
+  if (location.hash) prikazi(location.hash.slice(1));
+</script>
+</body>
+</html>

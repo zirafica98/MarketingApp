@@ -1,0 +1,148 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Tim i uloge</h1>
+      <p class="sub">Radni prostor „{{ ws.current()?.name }}“ · ko šta sme, po brendu</p>
+    </div>
+  </div>
+
+  @if (greska()) {
+    <div class="alert bad" role="alert">{{ greska() }}</div>
+  }
+  @if (poruka()) {
+    <div class="alert ok" role="status">{{ poruka() }}</div>
+  }
+
+  <section class="card" aria-labelledby="clanovi-h">
+    <h2 id="clanovi-h">Članovi</h2>
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr><th scope="col">Član</th><th scope="col">Uloga</th><th scope="col">Brendovi</th><th scope="col"><span class="sr-only">Radnje</span></th></tr></thead>
+        <tbody>
+          @for (c of clanovi(); track c.user_id) {
+            <tr>
+              <td><b>{{ c.profile?.full_name || '—' }}</b>@if (c.user_id === auth.userId()) { <span class="small muted"> (ti)</span> }<br /><span class="small muted">{{ c.profile?.email }}</span></td>
+              @if (izmena()?.userId === c.user_id) {
+                <td colspan="3">
+                  @let iz = izmena()!;
+                  <div class="row" style="align-items:flex-start; gap:16px">
+                    <div class="field" style="margin:0">
+                      <label [for]="'r-' + c.user_id">Uloga</label>
+                      <select [id]="'r-' + c.user_id" [value]="iz.role" (change)="izmena.set({ userId: iz.userId, role: $any($event.target).value, svi: iz.svi, brandIds: iz.brandIds })">
+                        @for (r of uloge; track r) {
+                          @if (r !== 'admin' || ws.role() === 'owner') {
+                            <option [value]="r">{{ roleLabel[r] }}</option>
+                          }
+                        }
+                      </select>
+                    </div>
+                    @if (iz.role !== 'admin') {
+                      <fieldset>
+                        <legend>Brendovi</legend>
+                        <label class="check"><input type="checkbox" [checked]="iz.svi" (change)="izmena.set({ userId: iz.userId, role: iz.role, svi: $any($event.target).checked, brandIds: iz.brandIds })" /> Svi brendovi</label>
+                        @if (!iz.svi) {
+                          <div class="brendovi">
+                            @for (b of ws.brands(); track b.id) {
+                              <label class="check"><input type="checkbox" [checked]="iz.brandIds.includes(b.id)"
+                                (change)="izmena.set({ userId: iz.userId, role: iz.role, svi: iz.svi, brandIds: prebaci(iz.brandIds, b.id, $any($event.target).checked) })" /> {{ b.name }}</label>
+                            }
+                          </div>
+                        }
+                      </fieldset>
+                    }
+                    <div class="row">
+                      <button class="btn primary small" type="button" (click)="sacuvajIzmenu()">Sačuvaj</button>
+                      <button class="btn ghost small" type="button" (click)="izmena.set(null)">Odustani</button>
+                    </div>
+                  </div>
+                </td>
+              } @else {
+                <td><span class="pill" [class.ac]="c.role === 'owner'">{{ roleLabel[c.role] }}</span></td>
+                <td class="small">{{ brendoviClana(c.brand_ids) }}</td>
+                <td style="text-align:right; white-space:nowrap">
+                  @if (mozeIzmenu(c)) {
+                    <button class="btn small" type="button" (click)="zapocniIzmenu(c)">Izmeni</button>
+                    <button class="btn small danger" type="button" (click)="ukloni(c)">Ukloni</button>
+                  }
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  @if (ws.isAdmin()) {
+    <div class="grid g2" style="margin-top:16px; align-items:start">
+      <section class="card" aria-labelledby="poziv-h">
+        <h2 id="poziv-h">Pozovi člana</h2>
+        <form (submit)="pozovi($event)" novalidate>
+          <div class="field">
+            <label for="p-email">Mejl</label>
+            <input id="p-email" type="email" [formField]="f.email" aria-describedby="p-email-hint p-email-err"
+                   [attr.aria-invalid]="f.email().touched() && f.email().invalid()" />
+            <span class="hint" id="p-email-hint">Poziv važi samo za ovu adresu, 14 dana.</span>
+            <app-field-errors [field]="f.email" errId="p-email-err" />
+          </div>
+          <fieldset>
+            <legend>Uloga</legend>
+            <div class="uloge">
+              @for (r of uloge; track r) {
+                @if (r !== 'admin' || ws.role() === 'owner') {
+                  <label class="uloga">
+                    <input type="radio" name="uloga" [value]="r" [checked]="uloga() === r" (change)="postaviUlogu(r)" />
+                    <span><b>{{ roleLabel[r] }}</b><br /><span class="small muted">{{ roleOpis[r] }}</span></span>
+                  </label>
+                }
+              }
+            </div>
+          </fieldset>
+          @if (uloga() !== 'admin') {
+            <fieldset>
+              <legend>Za koje brendove</legend>
+              <label class="check"><input type="checkbox" [checked]="svi()" (change)="postaviSve($any($event.target).checked)" /> Svi brendovi (i budući)</label>
+              @if (!svi()) {
+                <div class="brendovi">
+                  @for (b of ws.brands(); track b.id) {
+                    <label class="check"><input type="checkbox" [checked]="izabraniBrendovi().includes(b.id)"
+                      (change)="izabraniBrendovi.set(prebaci(izabraniBrendovi(), b.id, $any($event.target).checked))" /> {{ b.name }}</label>
+                  } @empty {
+                    <p class="small muted">Još nema brendova.</p>
+                  }
+                </div>
+              }
+            </fieldset>
+          }
+          <button class="btn primary" type="submit" [disabled]="f().submitting()">Napravi poziv</button>
+        </form>
+        @if (noviLink()) {
+          <div class="alert ok" style="margin-top:14px" role="status">
+            <b>Poziv je napravljen.</b> Pošalji ovaj link (slanje mejlom stiže kasnije):
+            <code class="copy" style="margin:8px 0">{{ noviLink() }}</code>
+            <button class="btn small" type="button" (click)="kopiraj(noviLink())">Kopiraj link</button>
+          </div>
+        }
+      </section>
+
+      <section class="card" aria-labelledby="pozivi-h">
+        <h2 id="pozivi-h">Poslati pozivi</h2>
+        @for (p of otvoreniPozivi(); track p.id) {
+          <div style="padding:10px 0; border-bottom:1px solid var(--line)">
+            <div class="row between">
+              <b>{{ p.email }}</b>
+              <span class="pill">{{ roleLabel[p.role] }}</span>
+            </div>
+            <div class="small muted">{{ brendoviClana(p.brand_ids) }} · ističe {{ p.expires_at | date: 'd. M. y.' }}</div>
+            <div class="row" style="margin-top:6px">
+              <button class="btn small" type="button" (click)="kopiraj(link(p.token))">Kopiraj link</button>
+              <button class="btn small danger" type="button" (click)="otkaziPoziv(p.id)">Otkaži</button>
+            </div>
+          </div>
+        } @empty {
+          <p class="small muted">Nema poziva koji čekaju.</p>
+        }
+      </section>
+    </div>
+  }
+</div>

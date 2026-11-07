@@ -1,0 +1,16 @@
+{
+  "name": "marketing-pilot",
+  "private": true,
+  "description": "Marketing Pilot: centralno mesto za marketing više brendova (veb, worker, Supabase).",
+  "scripts": {
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:test": "supabase test db",
+    "web": "npm --prefix web start",
+    "worker": "npm --prefix worker start"
+  },
+  "devDependencies": {
+    "supabase": "^3.0.0"
+  }
+}

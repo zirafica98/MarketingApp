@@ -1,0 +1,76 @@
+<a class="skip" href="#sadrzaj">Preskoči na sadržaj</a>
+
+<header class="topbar">
+  <div class="logo"><i aria-hidden="true">✦</i> Marketing Pilot</div>
+  <button class="btn small" type="button" (click)="menuOpen.set(!menuOpen())" [attr.aria-expanded]="menuOpen()" aria-controls="meni">
+    {{ menuOpen() ? 'Zatvori' : 'Meni' }}
+  </button>
+</header>
+
+<aside id="meni">
+  <div class="logo side-logo"><i aria-hidden="true">✦</i> Marketing Pilot</div>
+
+  @if (ws.workspaces().length > 1) {
+    <div class="field compact">
+      <label for="ws-select">Radni prostor</label>
+      <select id="ws-select" (change)="promeniRadniProstor($any($event.target).value)">
+        @for (w of ws.workspaces(); track w.id) {
+          <option [value]="w.id" [selected]="w.id === ws.current()?.id">{{ w.name }}</option>
+        }
+      </select>
+    </div>
+  } @else {
+    <p class="small muted ws-name">Radni prostor: <b>{{ ws.current()?.name }}</b></p>
+  }
+
+  <div class="field compact">
+    <label for="brand-select">Brend</label>
+    <select id="brand-select" (change)="promeniBrend($any($event.target).value)">
+      <option value="" [selected]="!brandId()">— Svi brendovi —</option>
+      @for (b of ws.brands(); track b.id) {
+        <option [value]="b.id" [selected]="b.id === brandId()">{{ b.name }}</option>
+      }
+    </select>
+  </div>
+
+  <nav aria-label="Glavni meni">
+    <a routerLink="/brendovi" routerLinkActive="on" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }">🏠 Moji brendovi</a>
+
+    @if (brand(); as b) {
+      <div class="sec">
+        <span class="dot" [style.background]="b.color" aria-hidden="true"></span>{{ b.name }}
+      </div>
+      <a [routerLink]="['/b', b.id]" routerLinkActive="on" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }">📍 Pregled brenda</a>
+      @for (m of moduli; track m.slug) {
+        @if (m.sekcija === 'postavka') {
+          <a [routerLink]="['/b', b.id, m.slug]" routerLinkActive="on" ariaCurrentWhenActive="page">{{ m.ikona }} {{ m.naziv }}</a>
+        }
+      }
+      <div class="sec">Svaki dan</div>
+      @for (m of moduli; track m.slug) {
+        @if (m.sekcija === 'svaki-dan') {
+          <a [routerLink]="['/b', b.id, m.slug]" routerLinkActive="on" ariaCurrentWhenActive="page">{{ m.ikona }} {{ m.naziv }}</a>
+        }
+      }
+      @if (ws.isAdmin()) {
+        <a [routerLink]="['/b', b.id, 'podesavanja']" routerLinkActive="on" ariaCurrentWhenActive="page">⚙️ Podešavanja brenda</a>
+      }
+    }
+
+    <div class="sec">Radni prostor</div>
+    <a routerLink="/tim" routerLinkActive="on" ariaCurrentWhenActive="page">👥 Tim i uloge</a>
+  </nav>
+
+  <div class="me">
+    <div class="avatar" aria-hidden="true">{{ inicijali(displayName()) }}</div>
+    <div class="who">
+      <b>{{ displayName() }}</b>
+      <span class="small muted">{{ ws.role() ? roleLabel[ws.role()!] : '' }}</span>
+    </div>
+    <button class="btn small ghost" type="button" (click)="odjava()">Odjava</button>
+  </div>
+</aside>
+
+<main id="sadrzaj" tabindex="-1">
+  <router-outlet />
+</main>
