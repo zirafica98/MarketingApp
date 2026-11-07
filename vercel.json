@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "installCommand": "npm ci --prefix web",
-  "buildCommand": "node web/scripts/config-iz-okruzenja.mjs && npm --prefix web run build",
+  "installCommand": "cd web && npm ci",
+  "buildCommand": "node web/scripts/config-iz-okruzenja.mjs && cd web && npm run build",
   "outputDirectory": "web/dist/web/browser",
   "rewrites": [
     { "source": "/((?!.*\\.).*)", "destination": "/index.html" }
