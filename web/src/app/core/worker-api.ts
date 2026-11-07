@@ -7,7 +7,12 @@ import { Supabase } from './supabase';
 export class WorkerApi {
   private readonly sb = inject(Supabase).client;
 
+  private proveri(): void {
+    if (!CONFIG.workerUrl) throw new Error('Server alata (worker) još nije pokrenut, pa ova radnja ne radi. Ostatak aplikacije radi.');
+  }
+
   async post<T>(putanja: string, telo: unknown): Promise<T> {
+    this.proveri();
     const { data } = await this.sb.auth.getSession();
     const res = await fetch(`${CONFIG.workerUrl}${putanja}`, {
       method: 'POST',
@@ -22,6 +27,7 @@ export class WorkerApi {
   }
 
   async get<T>(putanja: string): Promise<T> {
+    this.proveri();
     const res = await fetch(`${CONFIG.workerUrl}${putanja}`).catch(() => null);
     if (!res?.ok) throw new Error('Server alata trenutno ne odgovara.');
     return (await res.json()) as T;

@@ -4,12 +4,13 @@
 // Vercel → Project → Settings → Environment Variables:
 //   MP_SUPABASE_URL   https://<projekat>.supabase.co
 //   MP_SUPABASE_KEY   publishable (anon) ključ projekta — javni, sme u pregledač; zaštita je u RLS
-//   MP_WORKER_URL     javna adresa workera (OAuth, tokeni, AI ključ, naplata), npr. https://mp-worker.fly.dev
+//   MP_WORKER_URL     (opciono) javna adresa workera (OAuth, tokeni, AI ključ, naplata), npr. https://mp-worker.fly.dev
+//                     Bez nje aplikacija radi (prijava, brendovi, upitnik, tim), ali agenti i konektori čekaju worker.
 
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-const potrebno = ['MP_SUPABASE_URL', 'MP_SUPABASE_KEY', 'MP_WORKER_URL'];
+const potrebno = ['MP_SUPABASE_URL', 'MP_SUPABASE_KEY'];
 const fali = potrebno.filter((k) => !process.env[k]?.trim());
 if (fali.length) {
   console.error(`\n✗ Nedostaju promenljive okruženja: ${fali.join(', ')}`);
@@ -18,10 +19,11 @@ if (fali.length) {
 }
 
 const url = process.env.MP_SUPABASE_URL.trim().replace(/\/$/, '');
-const worker = process.env.MP_WORKER_URL.trim().replace(/\/$/, '');
+const worker = (process.env.MP_WORKER_URL ?? '').trim().replace(/\/$/, '');
+if (!worker) console.warn('! MP_WORKER_URL nije postavljen: agenti, konektori i naplata neće raditi dok worker ne dobije server.');
 const kljuc = process.env.MP_SUPABASE_KEY.trim();
 for (const [ime, v] of [['MP_SUPABASE_URL', url], ['MP_WORKER_URL', worker]]) {
-  if (!/^https:\/\//.test(v)) {
+  if (v && !/^https:\/\//.test(v)) {
     console.error(`✗ ${ime} mora da počinje sa https:// (dobijeno: ${v})`);
     process.exit(1);
   }
