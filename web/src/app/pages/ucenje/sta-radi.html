@@ -1,0 +1,111 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Šta radi za ovaj brend</h1>
+      <p class="sub">Knjiga pravila koju Učitelj piše iz brojki brenda „{{ ws.brand(brandId())?.name }}“ i iz tvojih odluka. Strateg, Pisac i Urednik je čitaju pre svakog posla.</p>
+    </div>
+    @if (ws.canEdit()) {
+      <button class="btn primary" type="button" (click)="uci()" [disabled]="stanje().radi">{{ stanje().radi ? 'Učitelj radi…' : 'Pokreni učenje sada' }}</button>
+    }
+  </div>
+
+  @if (greska()) { <div class="alert bad" role="alert">{{ greska() }}</div> }
+  @if (poruka() && stanje().radi) { <div class="alert info" role="status">{{ poruka() }}</div> }
+  @if (posao()?.status === 'failed') { <div class="alert bad">Poslednje učenje nije uspelo: {{ posao()?.error }}</div> }
+
+  <div class="grid raspored">
+    <section class="card" aria-labelledby="pr-h">
+      <div class="row between">
+        <h2 id="pr-h" style="margin:0">Pravila ({{ broj().sve }}, sigurnih {{ broj().sigurno }})</h2>
+        <div class="seg" role="group" aria-label="Filter pravila">
+          @for (f of [['sve','Sva'],['sigurno','Sigurna'],['proverava_se','Proveravaju se'],['odluke','Iz tvojih odluka'],['obrisano','Obrisana']]; track f[0]) {
+            <button type="button" [attr.aria-pressed]="filter() === f[0]" (click)="filter.set($any(f[0]))">{{ f[1] }}</button>
+          }
+        </div>
+      </div>
+      <ul class="pravila">
+        @for (p of vidljiva(); track p.id) {
+          <li>
+            <span class="pill" [class]="'pill ' + sigurnost[p.confidence].klasa">{{ p.source === 'korisnik' ? 'tvoje pravilo' : sigurnost[p.confidence].tekst }}</span>
+            <div class="t">
+              @if (izmena()?.id === p.id) {
+                <label class="sr-only" [for]="'iz-' + p.id">Izmena pravila</label>
+                <textarea [id]="'iz-' + p.id" rows="2" [value]="izmena()!.tekst" (input)="izmena.set({ id: p.id, tekst: $any($event.target).value })"></textarea>
+                <div class="row"><button class="btn small primary" type="button" (click)="akcija(p, 'izmeni', izmena()!.tekst)">Sačuvaj</button>
+                  <button class="btn small ghost" type="button" (click)="izmena.set(null)">Odustani</button></div>
+              } @else {
+                <b>{{ p.statement }}</b>
+                @if (p.evidence) { <div class="small muted">{{ p.evidence }}</div> }
+                <div class="small muted">{{ p.locked ? '🔒 zaključano · ' : '' }}ažurirano {{ p.updated_at | date: 'd. M.' }}</div>
+              }
+            </div>
+            @if (ws.canEdit() && izmena()?.id !== p.id) {
+              <div class="ra">
+                @if (p.status === 'obrisano') {
+                  <button class="btn small" type="button" (click)="akcija(p, 'vrati')">Vrati</button>
+                } @else {
+                  <button class="btn small" type="button" (click)="akcija(p, p.locked ? 'otkljucaj' : 'zakljucaj')" [attr.aria-label]="(p.locked ? 'Otključaj: ' : 'Zaključaj: ') + p.statement">{{ p.locked ? 'Otključaj' : 'Zaključaj' }}</button>
+                  <button class="btn small" type="button" (click)="izmena.set({ id: p.id, tekst: p.statement })" [attr.aria-label]="'Izmeni: ' + p.statement">Izmeni</button>
+                  <button class="btn small danger" type="button" (click)="akcija(p, 'obrisi')" [attr.aria-label]="'Obriši: ' + p.statement">Obriši</button>
+                }
+              </div>
+            }
+          </li>
+        } @empty {
+          <li class="small muted">Još nema pravila. Učitelj ih piše svakog ponedeljka (ili odmah na dugme), kad ima objava i tvojih odluka.</li>
+        }
+      </ul>
+      @if (ws.canEdit()) {
+        <form class="row" (submit)="dodaj($event)">
+          <label for="novo" class="sr-only">Novo pravilo</label>
+          <input id="novo" class="ulaz" placeholder="Dodaj svoje pravilo, npr. „Nikad ne koristi reč ‘jeftino’“" [value]="novo()" (input)="novo.set($any($event.target).value)" />
+          <button class="btn" type="submit" [disabled]="novo().trim().length < 3">Dodaj</button>
+        </form>
+        <p class="small muted">Zaključana i tvoja pravila Učitelj ne menja. Obrisana ne vraća.</p>
+      }
+    </section>
+
+    <div class="stack">
+      @if (izvestaj(); as r) {
+        <section class="card" aria-labelledby="iz-h">
+          <h2 id="iz-h">Nedeljni izveštaj</h2>
+          <p class="small muted" style="margin-top:-8px">{{ r.period_start | date: 'd. M.' }} – {{ r.period_end | date: 'd. M. y.' }} · {{ r.content.objava_7_dana }} objava u nedelji</p>
+          <h3>Radilo je</h3>
+          <ul>@for (x of r.content.radilo; track $index) { <li>{{ x }}</li> }</ul>
+          <h3>Nije radilo</h3>
+          <ul>@for (x of r.content.nije; track $index) { <li>{{ x }}</li> }</ul>
+          <div class="note"><b>Predlog za sledeću nedelju:</b> {{ r.content.predlog }}</div>
+          @if (r.strategy_proposed || predlogStrategije()) {
+            <a class="btn primary" style="margin-top:10px" [routerLink]="['/b', brandId(), 'strategija']">Pogledaj predlog izmene strategije →</a>
+          }
+        </section>
+      }
+
+      <section class="card" aria-labelledby="ek-h">
+        <h2 id="ek-h">Eksperimenti</h2>
+        @for (e of strategija()?.eksperimenti ?? []; track e.kljuc) {
+          <div class="eksp">
+            <h3>{{ e.naziv }}</h3>
+            <p class="small muted" style="margin:2px 0 8px">{{ e.hipoteza }}</p>
+            @if (eksp()[e.kljuc]; as redovi) {
+              @for (v of redovi; track v.varijanta) {
+                <div class="ab">
+                  <span class="pill ac">{{ v.varijanta }}</span>
+                  <span class="traka"><i [style.width.%]="(v.doseg / v.n / maxDoseg(redovi)) * 100"></i></span>
+                  <span class="small">{{ v.n }} obj. · doseg {{ v.doseg / v.n | number: '1.0-0' : 'sr' }} · čuvanja {{ v.cuvanja / v.n | number: '1.0-1' : 'sr' }}</span>
+                </div>
+              }
+            } @else {
+              <p class="small muted">Još nema objavljenih objava iz ovog eksperimenta.</p>
+            }
+            @for (z of zakljucci(); track z.kljuc) {
+              @if (z.kljuc === e.kljuc) { <p class="small"><b>Učitelj:</b> {{ z.zakljucak }}</p> }
+            }
+          </div>
+        } @empty {
+          <p class="small muted">Nema aktivnih eksperimenata. Postavlja ih Strateg u <a [routerLink]="['/b', brandId(), 'strategija']">strategiji</a>.</p>
+        }
+      </section>
+    </div>
+  </div>
+</div>

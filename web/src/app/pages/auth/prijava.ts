@@ -37,6 +37,7 @@ import { porukaGreske } from '../../core/supabase';
           </button>
         </form>
         <p class="small" style="margin:16px 0 0">Nemaš nalog? <a routerLink="/registracija" [queryParams]="nazad() ? { nazad: nazad() } : {}">Otvori nalog</a></p>
+        <p class="small muted" style="margin:12px 0 0"><a routerLink="/privatnost">Privatnost</a> · <a routerLink="/uslovi">Uslovi korišćenja</a></p>
       </div>
     </div>
   `,

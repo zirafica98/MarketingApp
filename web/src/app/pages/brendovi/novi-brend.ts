@@ -13,7 +13,7 @@ import { BrandForm, normalizujInstagram, normalizujSajt, type BrandInput } from 
       <div class="page-head">
         <div>
           <h1>Novi brend</h1>
-          <p class="sub">Radni prostor „{{ ws.current()?.name }}“. Ostalo (upitnik, mreže, prodavnica) popunjavamo u sledećim koracima.</p>
+          <p class="sub">Radni prostor „{{ ws.current()?.name }}“. Upiši sajt i agent odmah počinje da ga čita, dok ti popunjavaš upitnik.</p>
         </div>
       </div>
       @if (!ws.isAdmin()) {
@@ -61,6 +61,10 @@ export default class NoviBrend {
       return;
     }
     await this.ws.loadBrands();
-    await this.router.navigate(['/b', data.id]);
+    // brzi početak: agent odmah čita sajt dok korisnik popunjava upitnik
+    if (normalizujSajt(v.website)) {
+      await this.sb.rpc('enqueue_job', { p_brand: data.id, p_type: 'brand.research', p_payload: {} });
+    }
+    await this.router.navigate(['/b', data.id, 'upitnik']);
   };
 }

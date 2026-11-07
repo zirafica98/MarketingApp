@@ -6,10 +6,11 @@ import { Auth } from '../core/auth';
 import { ROLE_LABEL } from '../core/models';
 import { WorkspaceState } from '../core/workspace';
 import { MODULI } from '../pages/brend/moduli';
+import { Obavestenja } from './obavestenja';
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, Obavestenja],
   templateUrl: './shell.html',
   styleUrl: './shell.css',
   host: { '[class.menu-open]': 'menuOpen()' },

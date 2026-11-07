@@ -1,0 +1,128 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Brend profil</h1>
+      <p class="sub">{{ brand()?.name }} · ovo čitaju svi agenti pre svakog posla.
+        @switch (status()) {
+          @case ('potvrdjen') { <span class="pill ok">Potvrđen</span> }
+          @case ('predlog') { <span class="pill warn">Predlog — pregledaj i potvrdi</span> }
+          @default { <span class="pill">Još nije sastavljen</span> }
+        }
+        @if (ob.profile(); as p) { <span class="small muted"> · verzija {{ p.version }}</span> }
+      </p>
+    </div>
+    @if (ws.canEdit() && imaSazetak()) {
+      <button class="btn" type="button" (click)="sastavi()" [disabled]="posao().radi">{{ posao().radi ? 'Sastavlja…' : 'Sastavi ponovo' }}</button>
+    }
+  </div>
+
+  @if (greska()) {
+    <div class="alert bad" role="alert">{{ greska() }}</div>
+  }
+  @if (poruka()) {
+    <div class="alert ok" role="status">{{ poruka() }}</div>
+  }
+
+  <section class="card" aria-labelledby="sazetak-h" style="margin-bottom:16px">
+    <h2 id="sazetak-h">Sažetak</h2>
+    @if (posao().radi) {
+      <div class="alert info" role="status">Agent sastavlja profil iz upitnika, razgovora, činjenica i konkurencije… (obično 1 minut)</div>
+    }
+    @if (!imaSazetak() && !posao().radi) {
+      @if (sazetak()?.opis_sa_sajta) {
+        <p><b>Sa sajta:</b> {{ sazetak()!.opis_sa_sajta }}</p>
+      }
+      <p class="small muted">Profil se sastavlja kad popuniš upitnik i odgovoriš na pitanja agenta. Možeš i odmah, sa onim što postoji.</p>
+      @if (ws.canEdit()) {
+        <div class="row">
+          <a class="btn primary" [routerLink]="['/b', brandId(), 'razgovor']">Razgovor sa agentom →</a>
+          <button class="btn" type="button" (click)="sastavi()">Sastavi odmah</button>
+        </div>
+      }
+    } @else if (imaSazetak()) {
+      @if (posao().tekst === 'nije uspelo') {
+        <div class="alert bad">Poslednje sastavljanje nije uspelo: {{ ob.lastJob().get('brand.profile')?.error }}</div>
+      }
+      <div class="polja">
+        @for (p of polja; track p.kljuc) {
+          <div class="field" [class.siroko]="p.kljuc === 'jedna_recenica'">
+            <label [for]="'s-' + p.kljuc">{{ p.naziv }}@if (p.lista) {<span class="small muted"> (jedna stavka po redu)</span>}</label>
+            <textarea [id]="'s-' + p.kljuc" [rows]="p.lista ? 4 : p.kljuc === 'jedna_recenica' ? 2 : 3" [readonly]="!ws.canEdit()"
+                      [value]="nacrt()[p.kljuc] ?? ''" (input)="promeni(p.kljuc, $any($event.target).value)"
+                      [attr.aria-describedby]="p.pomoc ? 'sh-' + p.kljuc : null"></textarea>
+            @if (p.pomoc) { <span class="hint" [id]="'sh-' + p.kljuc">{{ p.pomoc }}</span> }
+          </div>
+        }
+      </div>
+      @if (sazetak()?.otvorena_pitanja?.length) {
+        <div class="alert info">
+          <b>Agent nije siguran za:</b>
+          <ul style="margin:6px 0 0; padding-left:18px">
+            @for (q of sazetak()!.otvorena_pitanja!; track q) { <li>{{ q }}</li> }
+          </ul>
+        </div>
+      }
+      @if (ws.canEdit()) {
+        <div class="row">
+          <button class="btn primary" type="button" (click)="sacuvaj(true)">{{ status() === 'potvrdjen' && !izmenjeno() ? 'Potvrđeno ✓' : 'Sačuvaj i potvrdi profil' }}</button>
+          @if (izmenjeno()) {
+            <button class="btn" type="button" (click)="sacuvaj(false)">Sačuvaj bez potvrde</button>
+          }
+        </div>
+      }
+    }
+  </section>
+
+  <section class="card" aria-labelledby="cinjenice-h">
+    <div class="row between">
+      <h2 id="cinjenice-h" style="margin:0">Činjenice o proizvodu</h2>
+      <div class="seg" role="group" aria-label="Prikaži činjenice">
+        @for (o of [['sve', 'Sve'], ['predlog', 'Za proveru'], ['potvrdjeno', 'Potvrđene'], ['odbaceno', 'Odbačene']]; track o[0]) {
+          <button type="button" [attr.aria-pressed]="filter() === o[0]" (click)="filter.set($any(o[0]))">{{ o[1] }}</button>
+        }
+      </div>
+    </div>
+    <p class="small muted">Agenti tvrde samo ono što je ovde potvrđeno. Svaka činjenica sa sajta ima izvor.</p>
+
+    @if (brojPredloga() > 1 && ws.canEdit()) {
+      <button class="btn small" type="button" (click)="potvrdiSve()">Sve tačno ({{ brojPredloga() }})</button>
+    }
+
+    <div>
+      @for (f of cinjenice(); track f.id) {
+        <div class="fact" [class.odbaceno]="f.status === 'odbaceno'">
+          @switch (f.status) {
+            @case ('potvrdjeno') { <span class="pill ok">✓ tačno</span> }
+            @case ('odbaceno') { <span class="pill bad">netačno</span> }
+            @default { <span class="pill warn">proveri</span> }
+          }
+          <div class="t">
+            <span>{{ f.text }}</span>
+            <div class="small muted">{{ kategorije[f.category] ?? f.category }} ·
+              @if (f.source_url) {
+                <a class="izvor" [href]="f.source_url" target="_blank" rel="noopener">{{ f.source_kind }}: {{ domen(f.source_url) }}</a>
+              } @else { {{ f.source_kind === 'korisnik' ? 'dodao korisnik' : f.source_kind }} }
+            </div>
+          </div>
+          @if (ws.canEdit()) {
+            <div class="row" style="flex-wrap:nowrap">
+              @if (f.status !== 'potvrdjeno') { <button class="btn small" type="button" (click)="oceni(f, 'potvrdjeno')">Tačno</button> }
+              @if (f.status !== 'odbaceno') { <button class="btn small danger" type="button" (click)="oceni(f, 'odbaceno')">Netačno</button> }
+            </div>
+          }
+        </div>
+      } @empty {
+        <p class="small muted">Nema činjenica. Pokreni čitanje sajta u <a [routerLink]="['/b', brandId(), 'upitnik']">upitniku</a> ili dodaj svoje.</p>
+      }
+    </div>
+
+    @if (ws.canEdit()) {
+      <form class="row" style="margin-top:12px" (submit)="dodaj($event)">
+        <label for="nova" class="sr-only">Nova činjenica</label>
+        <input id="nova" style="flex:1; min-width:220px; border:1px solid #cfcbc3; border-radius:10px; padding:10px 12px; min-height:42px"
+               placeholder="Dodaj činjenicu, npr. Besplatan povrat u roku od 30 dana" [value]="novaCinjenica()" (input)="novaCinjenica.set($any($event.target).value)" />
+        <button class="btn" type="submit">Dodaj</button>
+      </form>
+    }
+  </section>
+</div>

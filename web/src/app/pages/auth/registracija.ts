@@ -48,6 +48,7 @@ import { bezbednaPutanja } from './prijava';
           </form>
         }
         <p class="small" style="margin:16px 0 0">Već imaš nalog? <a routerLink="/prijava" [queryParams]="nazad() ? { nazad: nazad() } : {}">Prijavi se</a></p>
+        <p class="small muted" style="margin:12px 0 0"><a routerLink="/privatnost">Privatnost</a> · <a routerLink="/uslovi">Uslovi korišćenja</a></p>
       </div>
     </div>
   `,

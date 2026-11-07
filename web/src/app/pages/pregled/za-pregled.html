@@ -1,0 +1,212 @@
+<div class="page wide">
+  <div class="page-head">
+    <div>
+      <h1>Za pregled</h1>
+      <p class="sub">{{ ws.brand(brandId())?.name }} · ništa ne ide javno dok ne odobriš.</p>
+    </div>
+    @if (filter() === 'pregled' && prosliOdobrene().length > 1 && mozeOdobri()) {
+      <button class="btn" type="button" (click)="odobriSve()" [disabled]="radi()">Odobri sve koji su prošli proveru ({{ prosliOdobrene().length }})</button>
+    }
+  </div>
+
+  <div class="tabs" role="tablist" aria-label="Filter nacrta">
+    @for (f of filteri; track f.k) {
+      <button role="tab" type="button" [attr.aria-selected]="filter() === f.k" (click)="filter.set(f.k)">{{ f.n }} <span class="muted">{{ broj()[f.k] }}</span></button>
+    }
+  </div>
+
+  @if (greska()) { <div class="alert bad" role="alert">{{ greska() }}</div> }
+  @if (poruka()) { <div class="alert ok" role="status">{{ poruka() }}</div> }
+
+  @if (store.ucitano() && !store.nacrti().length) {
+    <div class="empty">
+      <p><b>Još nema nacrta.</b></p>
+      <p>Nacrti nastaju iz prihvaćene <a [routerLink]="['/b', brandId(), 'strategija']">strategije</a>: svake nedelje za sledeću, ili odmah na dugme.</p>
+    </div>
+  } @else {
+    <div class="raspored">
+      <ul class="card lista" role="list" aria-label="Nacrti">
+        @for (n of lista(); track n.id) {
+          <li>
+            <button type="button" class="stavka" [class.sel]="izabran()?.id === n.id" (click)="izaberi(n)" [attr.aria-current]="izabran()?.id === n.id">
+              @if (n.draft_variants[0]?.media?.[0]; as m) {
+                <img class="thumb" [src]="m.url" alt="" loading="lazy" />
+              } @else {
+                <span class="thumb prazno" aria-hidden="true">{{ n.format === 'tekst' ? 'Aa' : '…' }}</span>
+              }
+              <span class="info">
+                <b>{{ n.topic ?? (n.status === 'pravi_se' ? 'Pisac piše…' : 'Bez teme') }}</b>
+                <span class="small muted">{{ n.scheduled_at ? (n.scheduled_at | date: 'EEE d. M. HH:mm') : 'bez vremena' }} · {{ n.format }}</span>
+                <span class="row" style="gap:4px">
+                  <span class="pill" [class]="'pill ' + statusi[n.status].klasa">{{ statusi[n.status].tekst }}</span>
+                  @if (n.status === 'za_pregled' && n.check_result) {
+                    <span class="pill" [class.ok]="n.check_result.prosao" [class.bad]="!n.check_result.prosao">{{ n.check_result.prosao ? 'prošao proveru' : 'primedbe' }}</span>
+                  }
+                </span>
+              </span>
+            </button>
+          </li>
+        } @empty {
+          <li class="small muted" style="padding:12px">Nema nacrta u ovom filteru.</li>
+        }
+      </ul>
+
+      @if (izabran(); as n) {
+        <section class="card detalj" aria-labelledby="nacrt-h">
+          <div class="dva">
+            <div>
+              <div class="telefon" aria-label="Pregled objave">
+                <div class="ekran">
+                  <div class="ig-vrh"><span class="av" [style.background]="ws.brand(n.brand_id)?.color">{{ ws.brand(n.brand_id)?.name?.[0] }}</span>{{ ws.brand(n.brand_id)?.instagram_handle ?? ws.brand(n.brand_id)?.name }}</div>
+                  @if (slike().length) {
+                    <img class="slajd" [src]="slike()[slajd()]?.url" [alt]="n.slides[slajd()]?.naslov ?? ''" />
+                    @if (slike().length > 1) {
+                      <div class="row between nav">
+                        <button class="btn small ghost" type="button" (click)="slajd.set(slajd() - 1)" [disabled]="slajd() === 0" aria-label="Prethodni slajd">←</button>
+                        <span class="small">{{ slajd() + 1 }} / {{ slike().length }}</span>
+                        <button class="btn small ghost" type="button" (click)="slajd.set(slajd() + 1)" [disabled]="slajd() === slike().length - 1" aria-label="Sledeći slajd">→</button>
+                      </div>
+                    }
+                  } @else if (n.status === 'pravi_se' || n.status === 'popravlja_se') {
+                    <div class="slajd prazno">Pisac i Urednik rade…</div>
+                  }
+                  <p class="opis small">{{ varijanta()?.caption }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="row between">
+                <h2 id="nacrt-h" style="margin:0">{{ n.topic ?? 'Nacrt' }}</h2>
+                <span class="pill" [class]="'pill ' + statusi[n.status].klasa">{{ statusi[n.status].tekst }}</span>
+              </div>
+              <p class="small muted">
+                {{ n.format }}@if (n.pillar) { · stub: {{ n.pillar }} }@if (n.experiment_key) { · eksperiment {{ n.experiment_key }} ({{ n.experiment_variant }}) }
+              </p>
+              @if (n.error) { <div class="alert bad">{{ n.error }}</div> }
+              @if (n.revision_note && n.status === 'popravlja_se') { <div class="alert info">Popravka: {{ n.revision_note }}</div> }
+
+              @if (n.draft_variants.length) {
+                <div class="tabs mali" role="tablist" aria-label="Kanal">
+                  @for (v of n.draft_variants; track v.channel) {
+                    <button role="tab" type="button" [attr.aria-selected]="kanal() === v.channel" (click)="kanal.set(v.channel)">{{ nazivKanala(v.channel) }}</button>
+                  }
+                </div>
+                <div class="field">
+                  <label for="opis">Tekst za {{ nazivKanala(kanal()) }}</label>
+                  <textarea id="opis" rows="7" [readonly]="!ws.canEdit() || !['za_pregled','odobren','zakazan'].includes(n.status)"
+                            [value]="tekst()" (input)="tekst.set($any($event.target).value)"></textarea>
+                  <span class="hint">{{ tekst().length }} znakova</span>
+                </div>
+                <div class="field">
+                  <label for="hash">Hashtagovi</label>
+                  <input id="hash" [readonly]="!ws.canEdit() || !['za_pregled','odobren','zakazan'].includes(n.status)" [value]="hashtagovi()" (input)="hashtagovi.set($any($event.target).value)" />
+                </div>
+                @if (izmenjenTekst() && ws.canEdit()) {
+                  <button class="btn small" type="button" (click)="sacuvajTekst(n)" [disabled]="radi()">Sačuvaj tekst</button>
+                }
+              }
+
+              @if (n.check_result; as c) {
+                <h3 style="margin-top:14px">Provera (Urednik)</h3>
+                <ul class="provera">
+                  @for (s of c.stavke; track $index) {
+                    <li><span aria-hidden="true">{{ s.ok ? '✅' : '⚠️' }}</span><span class="sr-only">{{ s.ok ? 'U redu:' : 'Primedba:' }}</span> {{ s.tekst }}</li>
+                  }
+                </ul>
+              }
+
+              <!-- radnje -->
+              @if (n.status === 'za_pregled' || n.status === 'odobren') {
+                @if (mozeOdobri()) {
+                  <div class="akcije">
+                    <div class="field" style="margin:0">
+                      <label for="vreme">Vreme objave</label>
+                      <input id="vreme" type="datetime-local" [value]="vreme()" (input)="vreme.set($any($event.target).value)" />
+                    </div>
+                    <div class="row">
+                      <button class="btn primary" type="button" (click)="odobri(n)" [disabled]="radi()">{{ vreme() ? 'Odobri i zakaži' : 'Odobri' }}</button>
+                      <button class="btn" type="button" (click)="objaviOdmah(n)" [disabled]="radi()">Objavi odmah</button>
+                      <button class="btn danger" type="button" (click)="odbijanje.set(!odbijanje())" [attr.aria-expanded]="odbijanje()">Odbij…</button>
+                    </div>
+                  </div>
+                  @if (odbijanje()) {
+                    <fieldset class="odbij">
+                      <legend>Zašto odbijaš? (Učitelj to pamti)</legend>
+                      <div class="row">
+                        @for (r of razlozi; track r) {
+                          <label class="opt"><input type="radio" name="razlog" [checked]="razlog() === r" (change)="razlog.set(r)" /> {{ r }}</label>
+                        }
+                      </div>
+                      <label for="kom" class="sr-only">Komentar</label>
+                      <input id="kom" class="ulaz" placeholder="Komentar (opciono)" [value]="komentar()" (input)="komentar.set($any($event.target).value)" />
+                      <button class="btn danger small" type="button" (click)="odbij(n)" [disabled]="!razlog() || radi()">Odbij nacrt</button>
+                    </fieldset>
+                  }
+                }
+                @if (ws.canEdit() && n.status === 'za_pregled') {
+                  <form class="popravi" (submit)="$event.preventDefault(); trazi(n)">
+                    <label for="pop" class="sr-only">Šta da Pisac popravi</label>
+                    <input id="pop" class="ulaz" placeholder="Napiši šta da popravi, npr. „kraći uvod, bez emodžija na početku“" [value]="popravka()" (input)="popravka.set($any($event.target).value)" />
+                    <button class="btn" type="submit" [disabled]="!popravka().trim() || radi()">Popravi</button>
+                  </form>
+                }
+              } @else if (n.status === 'zakazan' && mozeOdobri()) {
+                <div class="alert info">Zakazano za {{ n.scheduled_at | date: 'EEEE d. M. u HH:mm' }}.</div>
+                <div class="row">
+                  <button class="btn" type="button" (click)="objaviOdmah(n)" [disabled]="radi()">Objavi odmah</button>
+                  <button class="btn ghost" type="button" (click)="vrati(n)" [disabled]="radi()">Vrati u pregled</button>
+                </div>
+              } @else if (n.status === 'greska' && mozeOdobri()) {
+                <div class="row">
+                  <button class="btn primary" type="button" (click)="objaviOdmah(n)" [disabled]="radi()">Pokušaj ponovo</button>
+                  <button class="btn ghost" type="button" (click)="vrati(n)" [disabled]="radi()">Vrati u pregled</button>
+                </div>
+              }
+
+              <!-- stanje objave po kanalu -->
+              @if (n.publications.length) {
+                <h3 style="margin-top:16px">Objava po kanalima</h3>
+                <ul class="objave">
+                  @for (p of n.publications; track p.id) {
+                    <li>
+                      <div class="row between">
+                        <b>{{ nazivKanala(p.channel) }}</b>
+                        @switch (p.status) {
+                          @case ('objavljeno') { <span class="pill ok">objavljeno{{ p.mode === 'rucno' ? ' ručno' : '' }}</span> }
+                          @case ('ceka_rucno') { <span class="pill warn">čeka ručnu objavu</span> }
+                          @case ('greska') { <span class="pill bad">greška</span> }
+                          @default { <span class="pill ac">objavljuje se…</span> }
+                        }
+                      </div>
+                      @if (p.permalink) { <a class="small" [href]="p.permalink" target="_blank" rel="noopener">Otvori objavu</a> }
+                      @if (p.error) { <p class="small" style="color:var(--bad); margin:4px 0">{{ p.error }}</p> }
+                      @if (p.status === 'ceka_rucno') {
+                        <div class="rucno">
+                          <p class="small" style="margin:0">1. Preuzmi slike · 2. Kopiraj tekst · 3. Objavi na {{ nazivKanala(p.channel) }} · 4. Klikni „Objavljeno“</p>
+                          <div class="row">
+                            @for (m of slike(); track m.path; let i = $index) {
+                              <a class="btn small" [href]="m.url" target="_blank" rel="noopener" [attr.download]="'slajd-' + (i + 1) + '.png'">Slika {{ i + 1 }}</a>
+                            }
+                            <button class="btn small" type="button" (click)="kopiraj(tekstZaObjavu(n, p.channel))">Kopiraj tekst</button>
+                          </div>
+                          @if (mozeOdobri()) {
+                            <div class="row">
+                              <label class="sr-only" [for]="'link-' + p.id">Link objave (opciono)</label>
+                              <input class="ulaz" [id]="'link-' + p.id" placeholder="Link objave (opciono, za statistiku)" [value]="linkRucno()[p.id] ?? ''" (input)="postaviLink(p.id, $any($event.target).value)" />
+                              <button class="btn small primary" type="button" (click)="objavljenoRucno(p)" [disabled]="radi()">Objavljeno</button>
+                            </div>
+                          }
+                        </div>
+                      }
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          </div>
+        </section>
+      }
+    </div>
+  }
+</div>

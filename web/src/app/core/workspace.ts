@@ -53,13 +53,13 @@ export class WorkspaceState {
     if (!uid) return;
     const { data, error } = await this.sb
       .from('workspace_members')
-      .select('role, brand_ids, workspace:workspaces(id, name)')
+      .select('role, brand_ids, workspace:workspaces(id, name, plan)')
       .eq('user_id', uid);
     if (error) throw error;
     const list = (data ?? [])
       .map((r) => {
-        const ws = r.workspace as unknown as { id: string; name: string } | null;
-        return ws ? { id: ws.id, name: ws.name, role: r.role as Role, brand_ids: r.brand_ids as string[] | null } : null;
+        const ws = r.workspace as unknown as { id: string; name: string; plan: string } | null;
+        return ws ? { id: ws.id, name: ws.name, plan: ws.plan, role: r.role as Role, brand_ids: r.brand_ids as string[] | null } : null;
       })
       .filter((w): w is Workspace => !!w)
       .sort((a, b) => a.name.localeCompare(b.name, 'sr'));

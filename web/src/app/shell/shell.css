@@ -27,3 +27,5 @@ main { min-width: 0; outline: none; }
   aside { display: none; position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
   :host(.menu-open) aside { display: flex; }
 }
+
+.podnozje { padding: 0 36px 24px; }

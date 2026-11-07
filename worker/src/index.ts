@@ -7,6 +7,9 @@ import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 import { claimJob, createPool, failJob, finishJob, requeueStale } from './db.ts';
 import { JobError, runJob } from './jobs/index.ts';
+import { pokreniHttp } from './http.ts';
+import { rutaNaplate } from './naplata.ts';
+import { otkucaj } from './scheduler.ts';
 
 const envFile = fileURLToPath(new URL('../../.env.local', import.meta.url));
 if (existsSync(envFile)) process.loadEnvFile(envFile);
@@ -63,6 +66,11 @@ async function listen(): Promise<void> {
 
 async function main(): Promise<void> {
   await listen();
+  rutaNaplate(db);
+  pokreniHttp(db);
+  const raspored = () => void otkucaj(db).catch((e) => log('! raspoređivač', e));
+  raspored();
+  setInterval(raspored, 60_000);
   const n = await requeueStale(db);
   if (n) log(`↺ vraćeno u red ${n} poslova koji su visili`);
   log(`Worker ${WORKER_ID} radi (najviše ${CONCURRENCY} posla odjednom).`);

@@ -1,11 +1,12 @@
 import { DatePipe, JsonPipe } from '@angular/common';
-import { Component, computed, DestroyRef, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { Job, JobStatus } from '../../core/models';
 import { porukaGreske, Supabase } from '../../core/supabase';
 import { WorkspaceState } from '../../core/workspace';
 import { MODULI } from './moduli';
+import { BrandOnboarding } from '../../core/onboarding';
 
 const STATUS: Record<JobStatus, { tekst: string; klasa: string }> = {
   queued: { tekst: 'čeka u redu', klasa: '' },
@@ -18,11 +19,16 @@ const STATUS: Record<JobStatus, { tekst: string; klasa: string }> = {
 const NAZIV_POSLA: Record<string, string> = {
   'system.ping': 'Provera reda poslova',
   'ai.test': 'Probni AI poziv',
+  'brand.research': 'Istraživač: čitanje sajta',
+  'brand.competitor': 'Istraživač: konkurent',
+  'brand.interview': 'Intervjuer: pitanja',
+  'brand.profile': 'Sastavljanje brend profila',
 };
 
 @Component({
   selector: 'app-brend-pregled',
   imports: [RouterLink, DatePipe, JsonPipe],
+  providers: [BrandOnboarding],
   template: `
     @if (brand(); as b) {
       <div class="page">
@@ -45,13 +51,30 @@ const NAZIV_POSLA: Record<string, string> = {
 
         <div class="grid g2">
           <section class="card" aria-labelledby="sledece">
-            <h2 id="sledece">Šta sledi za ovaj brend</h2>
+            <div class="row between">
+              <h2 id="sledece" style="margin:0">Šta još fali</h2>
+              <span class="pill" [class.ok]="ob.procenat() === 100" [class.ac]="ob.procenat() < 100">{{ ob.procenat() }}% gotovo</span>
+            </div>
+            <div class="traka" role="progressbar" aria-label="Onboarding" [attr.aria-valuenow]="ob.procenat()" aria-valuemin="0" aria-valuemax="100">
+              <i [style.width.%]="ob.procenat()"></i>
+            </div>
             <ol class="koraci">
-              <li class="gotovo"><span aria-hidden="true">✓</span> Brend napravljen</li>
-              @for (m of moduli; track m.slug) {
-                <li><a [routerLink]="['/b', b.id, m.slug]">{{ m.naziv }}</a> <span class="pill">{{ m.faza }}</span></li>
+              @for (k of ob.koraci(); track k.kljuc) {
+                <li [class.gotovo]="k.gotovo">
+                  <span class="znak" aria-hidden="true">{{ k.gotovo ? '✓' : '○' }}</span>
+                  <span style="flex:1">
+                    <a [routerLink]="k.link">{{ k.naziv }}</a>@if (k.gotovo) {<span class="sr-only"> (gotovo)</span>}
+                    <br /><span class="small muted">{{ k.opis }}</span>
+                  </span>
+                </li>
               }
             </ol>
+            <h3 style="margin-top:16px">Rad sa brendom</h3>
+            <ul class="kasnije">
+              @for (m of kasnije; track m.slug) {
+                <li><a [routerLink]="['/b', b.id, m.slug]">{{ m.ikona }} {{ m.naziv }}</a></li>
+              }
+            </ul>
           </section>
 
           <section class="card" aria-labelledby="provera">
@@ -88,7 +111,7 @@ const NAZIV_POSLA: Record<string, string> = {
                           <p><b>Ideja:</b> {{ $any(j.result).ideja }}</p>
                           <p class="muted">{{ $any(j.result).model }} · {{ sekunde($any(j.result).trajanje_ms) }} s</p>
                         </div>
-                      } @else {
+                      } @else if (j.type === 'system.ping') {
                         <code class="copy">{{ j.result | json }}</code>
                       }
                     }
@@ -106,8 +129,14 @@ const NAZIV_POSLA: Record<string, string> = {
   `,
   styles: `
     .koraci { margin: 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
-    .koraci li { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
-    .koraci .gotovo { color: var(--ok); font-weight: 600; justify-content: flex-start; }
+    .koraci { margin-top: 14px; }
+    .koraci li { display: flex; align-items: flex-start; gap: 10px; }
+    .koraci .znak { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; border: 1px solid #cfcbc3; flex: none; font-size: 12px; }
+    .koraci .gotovo .znak { background: var(--ok); border-color: var(--ok); color: #fff; }
+    .traka { height: 8px; background: #eceae5; border-radius: 9px; overflow: hidden; margin-top: 12px; }
+    .traka i { display: block; height: 100%; background: var(--accent); transition: width .3s; }
+    .kasnije { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+    .kasnije li { display: flex; justify-content: space-between; gap: 8px; }
     .poslovi { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
     .poslovi li { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
     .ai p { margin: 6px 0 0; }
@@ -118,7 +147,8 @@ export default class BrendPregled {
   private readonly sb = inject(Supabase).client;
   readonly brandId = input.required<string>();
 
-  protected readonly moduli = MODULI;
+  protected readonly ob = inject(BrandOnboarding);
+  protected readonly kasnije = MODULI.filter((m) => m.faza !== 'Postavka');
   protected readonly brand = computed(() => this.ws.brand(this.brandId()));
   protected readonly poslovi = signal<Job[]>([]);
   protected readonly greska = signal('');
@@ -129,8 +159,9 @@ export default class BrendPregled {
     effect((onCleanup) => {
       const id = this.brandId();
       void this.ucitaj(id);
+      untracked(() => void this.ob.start(id));
       this.kanal = this.sb
-        .channel(`jobs-${id}`)
+        .channel(`jobs-${id}-${crypto.randomUUID()}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'jobs', filter: `brand_id=eq.${id}` }, () => void this.ucitaj(id))
         .subscribe();
       onCleanup(() => {

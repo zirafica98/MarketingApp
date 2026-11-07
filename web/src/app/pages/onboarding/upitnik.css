@@ -1,0 +1,26 @@
+.agent { margin-bottom: 16px; }
+.agent p { margin: 4px 0 0; }
+.wrap { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 18px; align-items: start; }
+.grupe { padding: 8px; position: sticky; top: 16px; }
+.grupe ol { list-style: none; margin: 0; padding: 0; }
+.grupe a { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 9px; color: var(--ink); text-decoration: none; font-size: 14px; }
+.grupe a:hover { background: #f5f3ef; }
+.grupe a.on { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+.grupe .ok { color: var(--ok); font-weight: 700; }
+.naslov { font-size: 22px; margin: 4px 0; outline: none; }
+.obavezno { color: var(--bad); }
+.opcije { display: flex; flex-wrap: wrap; gap: 8px; }
+.opt { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #cfcbc3; border-radius: 10px; padding: 7px 12px; background: #fff; cursor: pointer; font-size: 14px; }
+.opt.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+.opt input { accent-color: var(--accent); margin: 0; }
+textarea { resize: vertical; }
+.predlog { background: var(--accent-soft); border-radius: 10px; padding: 10px 12px; font-size: 14px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.konkurenti { list-style: none; padding: 0; margin: 0 0 10px; display: flex; flex-direction: column; gap: 8px; }
+.konkurenti li { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.ulaz { flex: 1; min-width: 200px; border: 1px solid #cfcbc3; border-radius: 10px; padding: 10px 12px; min-height: 42px; }
+.dno { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+@media (max-width: 900px) {
+  .wrap { grid-template-columns: 1fr; }
+  .grupe { position: static; }
+  .grupe ol { display: flex; flex-wrap: wrap; gap: 4px; }
+}

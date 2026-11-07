@@ -23,6 +23,10 @@ select pg_temp.kao('11111111-1111-1111-1111-111111111111');
 select lives_ok($$ select public.create_workspace('Mihajlo') $$, 'pravi radni prostor');
 create temp table ctx as select (select id from public.workspaces limit 1) as ws;
 grant select on ctx to authenticated;
+-- testovi pristupa ne zavise od plana
+reset role;
+update public.workspaces set plan = 'agencija' where id = (select ws from ctx);
+select pg_temp.kao('11111111-1111-1111-1111-111111111111');
 
 select is(public.my_role((select ws from ctx)), 'owner'::public.workspace_role, 'tvorac je vlasnik');
 select lives_ok($$ insert into public.brands (workspace_id, name, website, created_by)

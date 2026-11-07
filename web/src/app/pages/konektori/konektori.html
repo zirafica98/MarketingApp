@@ -1,0 +1,135 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Konektori</h1>
+      <p class="sub">Poveži kanale ovog brenda. Gde mreža to dozvoljava, alat objavljuje sam; gde ne, pripremi objavu i podseti te.</p>
+    </div>
+    <div class="seg" role="group" aria-label="Prikaži">
+      <button type="button" [attr.aria-pressed]="filter() === 'sve'" (click)="filter.set('sve')">Sve</button>
+      <button type="button" [attr.aria-pressed]="filter() === 'povezano'" (click)="filter.set('povezano')">Povezano ({{ veze().length }})</button>
+    </div>
+  </div>
+
+  @if (greska()) {
+    <div class="alert bad" role="alert">Povezivanje nije uspelo: {{ greska() }}</div>
+  }
+  @if (poruka()) {
+    <div class="alert ok" role="status">{{ poruka() }}</div>
+  }
+  @if (!serverRadi()) {
+    <div class="alert info">Server alata (worker) trenutno ne odgovara, pa povezivanje prijavom i tokenom ne radi. Ručni režim radi.</div>
+  }
+
+  <div class="wrap">
+    <div>
+      @for (g of grupe; track g.kljuc) {
+        @if (vidljivi(g.konektori).length) {
+          <h2 class="grp">{{ g.naziv }}</h2>
+          <ul class="mreza" role="list">
+            @for (k of vidljivi(g.konektori); track k.id) {
+              @let v = vezaZa(k);
+              @let o = oznaka(v);
+              <li>
+                <button type="button" class="kartica" [class.sel]="izabran().id === k.id" (click)="izaberi(k)" [attr.aria-pressed]="izabran().id === k.id">
+                  <span class="vrh">
+                    <span class="logo-k" [style.background]="k.boja" aria-hidden="true">{{ k.inicijali }}</span>
+                    <b>{{ k.naziv }}</b>
+                  </span>
+                  <span class="small muted">{{ k.opis }}</span>
+                  <span class="pill" [class]="'pill ' + o.klasa">{{ o.tekst }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      }
+    </div>
+
+    <aside class="card uputstvo" aria-labelledby="uputstvo-naslov">
+      @let k = izabran();
+      @let v = veza();
+      <div class="row">
+        <span class="logo-k" [style.background]="k.boja" aria-hidden="true">{{ k.inicijali }}</span>
+        <div><h2 id="uputstvo-naslov" tabindex="-1" style="margin:0; outline:none">{{ k.naziv }}</h2><span class="small muted">{{ k.opis }}</span></div>
+      </div>
+
+      @if (greskaLok()) {
+        <div class="alert bad" role="alert" style="margin-top:12px">{{ greskaLok() }}</div>
+      }
+
+      @if (v) {
+        <div class="stanje">
+          <div class="row between"><b>Stanje</b><span class="pill" [class]="'pill ' + oznaka(v).klasa">{{ oznaka(v).tekst }}</span></div>
+          @if (v.mode === 'auto') {
+            <p class="small">Poslednje osvežavanje: {{ v.last_sync_at ? (v.last_sync_at | date: 'd. M. HH:mm') : 'u toku…' }}</p>
+            @if (v.token_expires_at) {
+              <p class="small">Pristup važi još {{ brojDana(v.token_expires_at) }} dana (produžava se sam).</p>
+            }
+            @if (v.account_meta['pratioci'] !== undefined) {
+              <p class="small">{{ v.account_meta['pratioci'] }} pratilaca · {{ v.account_meta['objava'] }} objava</p>
+            }
+          } @else {
+            <p class="small">Alat pripremi slike i tekst, a u zakazano vreme dobijaš obaveštenje da objaviš u dva klika.</p>
+          }
+          @if (v.last_error) {
+            <p class="small" style="color:var(--bad)">{{ v.last_error }}</p>
+          }
+          @if (ws.isAdmin()) {
+            <div class="row">
+              @if (v.mode === 'auto') {
+                <button class="btn small" type="button" (click)="osvezi(v)">Osveži sada</button>
+              }
+              <button class="btn small danger" type="button" (click)="prekini(v, k)">Prekini vezu</button>
+            </div>
+          }
+        </div>
+      }
+
+      <h3 style="margin-top:16px">Kako se povezuje</h3>
+      <ol class="koraci">
+        @for (s of k.uputstvo; track $index) {
+          <li><span class="br" aria-hidden="true">{{ $index + 1 }}</span><span>{{ s }}</span></li>
+        }
+      </ol>
+      @if (k.odobrenje) {
+        <p class="small muted">ℹ️ {{ k.odobrenje }}</p>
+      }
+
+      @if (ws.isAdmin() && (!v || v.mode === 'rucno' || v.status === 'greska')) {
+        @if (k.nacini.includes('oauth')) {
+          <hr />
+          @if (podeseno()[k.id]) {
+            <button class="btn primary" type="button" style="width:100%" (click)="poveziOAuth(k)">{{ v?.status === 'greska' ? 'Poveži ponovo' : 'Poveži ' + k.naziv }}</button>
+          } @else {
+            <button class="btn primary" type="button" style="width:100%" disabled>Poveži {{ k.naziv }}</button>
+            <p class="small muted">Povezivanje prijavom još nije uključeno na ovom serveru (čeka Meta aplikaciju). Do tada koristi ručni režim.</p>
+          }
+        }
+        @if (k.nacini.includes('token')) {
+          <hr />
+          <form (submit)="poveziTokenom($event, k)">
+            @for (p of k.tokenPolja ?? []; track p.kljuc) {
+              <div class="field">
+                <label [for]="'t-' + p.kljuc">{{ p.naziv }}</label>
+                <input [id]="'t-' + p.kljuc" [type]="p.tajno ? 'password' : 'text'" autocomplete="off" [placeholder]="p.primer ?? ''"
+                       [value]="polja()[p.kljuc] ?? ''" (input)="postaviPolje(p.kljuc, $any($event.target).value)" />
+              </div>
+            }
+            <button class="btn primary" type="submit" style="width:100%" [disabled]="radi()">{{ radi() ? 'Proveravam…' : 'Proveri i poveži' }}</button>
+            <p class="small muted">Ključ se čuva šifrovan i niko ga posle ne vidi, ni administrator.</p>
+          </form>
+        }
+        @if (k.nacini.includes('rucno') && v?.mode !== 'rucno') {
+          <hr />
+          <div class="field">
+            <label for="rucno-ime">Ručni režim — ime profila (opciono)</label>
+            <input id="rucno-ime" placeholder="@korak.sneakers" [value]="imeRucno()" (input)="imeRucno.set($any($event.target).value)" />
+          </div>
+          <button class="btn" type="button" style="width:100%" (click)="rucno(k)">Koristi ručni režim</button>
+        }
+      } @else if (!ws.isAdmin()) {
+        <p class="small muted">Kanale povezuje vlasnik ili admin.</p>
+      }
+    </aside>
+  </div>
+</div>

@@ -1,0 +1,128 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Kampanje</h1>
+      <p class="sub">Akcija, lansiranje, praznik: zadaš cilj i period, Strateg napravi plan objava za sve kanale odjednom.</p>
+    </div>
+    @if (ws.canEdit() && !forma()) {
+      <button class="btn primary" type="button" (click)="otvoriFormu()">+ Nova kampanja</button>
+    }
+  </div>
+
+  @if (greska()) { <div class="alert bad" role="alert">{{ greska() }}</div> }
+  @if (poruka()) { <div class="alert ok" role="status">{{ poruka() }}</div> }
+
+  @if (forma()) {
+    <form class="card" (submit)="napravi($event)" aria-labelledby="nova-h" style="margin-bottom:16px">
+      <h2 id="nova-h">Nova kampanja</h2>
+      <div class="grid g2" style="gap:0 16px">
+        <div class="field">
+          <label for="k-ime">Naziv</label>
+          <input id="k-ime" placeholder="npr. Black Friday 2026" [value]="f().ime" (input)="postavi('ime', $any($event.target).value)" />
+        </div>
+        <div class="field">
+          <label for="k-cilj">Cilj</label>
+          <select id="k-cilj" (change)="postavi('cilj', $any($event.target).value)">
+            @for (c of ciljevi; track c) { <option [value]="c" [selected]="f().cilj === c">{{ c }}</option> }
+          </select>
+        </div>
+        <div class="field">
+          <label for="k-od">Početak</label>
+          <input id="k-od" type="date" [min]="danas" [value]="f().od" (input)="postavi('od', $any($event.target).value)" />
+        </div>
+        <div class="field">
+          <label for="k-do">Kraj</label>
+          <input id="k-do" type="date" [min]="f().od" [value]="f().do" (input)="postavi('do', $any($event.target).value)" />
+        </div>
+        <div class="field">
+          <label for="k-broj">Broj objava (otprilike)</label>
+          <input id="k-broj" type="number" min="1" max="20" [value]="f().broj" (input)="postavi('broj', +$any($event.target).value)" />
+        </div>
+      </div>
+      <fieldset>
+        <legend>Kanali</legend>
+        <div class="row">
+          @for (c of mogucaKanali(); track c) {
+            <label class="check"><input type="checkbox" [checked]="f().kanali.includes(c)" (change)="prebaci('kanali', c, $any($event.target).checked)" /> {{ nazivKanala(c) }}</label>
+          }
+        </div>
+      </fieldset>
+      @if (proizvodi().length) {
+        <fieldset>
+          <legend>Proizvodi u fokusu (opciono)</legend>
+          <div class="proizvodi">
+            @for (p of proizvodi(); track p.id) {
+              <label class="proizvod" [class.on]="f().proizvodi.includes(p.id)">
+                <input type="checkbox" [checked]="f().proizvodi.includes(p.id)" (change)="prebaci('proizvodi', p.id, $any($event.target).checked)" />
+                @if (p.image_url) { <img [src]="p.image_url" alt="" loading="lazy" /> }
+                <span><b>{{ p.name }}</b>@if (p.price) { <span class="small muted"> · {{ p.price | number: '1.0-2' : 'sr' }} {{ p.currency }}</span> }</span>
+              </label>
+            }
+          </div>
+        </fieldset>
+      } @else {
+        <p class="small muted">Poveži Shopify ili WooCommerce u <a [routerLink]="['/b', brandId(), 'konektori']">konektorima</a> pa biraš proizvode za kampanju.</p>
+      }
+      <div class="field">
+        <label for="k-nap">Napomena za Stratega (opciono)</label>
+        <textarea id="k-nap" rows="2" placeholder="npr. „popust 20% na sve patike, kod KORAK20“" [value]="f().napomena" (input)="postavi('napomena', $any($event.target).value)"></textarea>
+        <span class="hint">Činjenice o akciji (popust, kod, rok) napiši ovde: agenti ne smeju da ih izmisle.</span>
+      </div>
+      <div class="row">
+        <button class="btn primary" type="submit" [disabled]="radi()">{{ radi() ? 'Pravim…' : 'Napravi plan kampanje' }}</button>
+        <button class="btn ghost" type="button" (click)="forma.set(false)">Odustani</button>
+      </div>
+    </form>
+  }
+
+  @for (k of kampanje(); track k.id) {
+    <section class="card kampanja" [attr.aria-label]="k.name">
+      <div class="row between">
+        <div>
+          <h2 style="margin:0">{{ k.name }}</h2>
+          <p class="small muted" style="margin:4px 0 0">{{ k.goal }} · {{ k.starts_on | date: 'd. M.' }} – {{ k.ends_on | date: 'd. M. y.' }} · {{ k.channels.map(nazivKanala).join(', ') }}</p>
+        </div>
+        <div class="row">
+          @switch (k.status) {
+            @case ('planira_se') { <span class="pill ac">Strateg planira…</span> }
+            @case ('spremna') { <span class="pill ok">{{ k.drafts.length }} objava u planu</span> }
+            @case ('greska') { <span class="pill bad">Greška</span> }
+          }
+          @if (ws.canEdit()) { <button class="btn small danger" type="button" (click)="obrisi(k)">Obriši</button> }
+        </div>
+      </div>
+      @if (k.error) { <p class="small" style="color:var(--bad)">{{ k.error }}</p> }
+      @if (k.product_ids.length) { <p class="small">Proizvodi: {{ k.product_ids.map(nazivProizvoda).join(', ') }}</p> }
+      @if (k.drafts.length) {
+        <ol class="plan">
+          @for (d of k.drafts; track d.id) {
+            <li>
+              <span class="small"><b>{{ d.scheduled_at | date: 'EEE d. M. HH:mm' }}</b></span>
+              <a [routerLink]="['/b', brandId(), 'za-pregled']" [queryParams]="{ nacrt: d.id }">{{ d.topic ?? 'Pisac piše…' }}</a>
+              <span class="pill" [class]="'pill ' + statusi[d.status].klasa">{{ statusi[d.status].tekst }}</span>
+            </li>
+          }
+        </ol>
+      }
+    </section>
+  } @empty {
+    @if (!forma()) {
+      <div class="empty"><p><b>Još nema kampanja.</b></p><p>Važni datumi iz upitnika (akcije, lansiranja, praznici) su dobra prilika za prvu.</p></div>
+    }
+  }
+
+  @if (proizvodi().length) {
+    <details class="card" style="margin-top:16px">
+      <summary><b>Proizvodi iz prodavnice ({{ proizvodi().length }})</b></summary>
+      <ul class="katalog">
+        @for (p of proizvodi(); track p.id) {
+          <li>
+            @if (p.image_url) { <img [src]="p.image_url" alt="" loading="lazy" /> }
+            <span><a [href]="p.url" target="_blank" rel="noopener">{{ p.name }}</a>
+              <span class="small muted">@if (p.price) { {{ p.price | number: '1.0-2' : 'sr' }} {{ p.currency }} · }{{ p.in_stock === false ? 'nema na stanju' : 'na stanju' }}</span></span>
+          </li>
+        }
+      </ul>
+    </details>
+  }
+</div>

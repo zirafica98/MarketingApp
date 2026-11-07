@@ -1,0 +1,185 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Upitnik o poslovanju</h1>
+      <p class="sub">{{ brand()?.name }} · odgovori se čuvaju sami. Možeš da preskočiš i vratiš se kasnije.</p>
+    </div>
+    <span class="small muted" role="status" aria-live="polite">
+      @switch (cuvanje()) {
+        @case ('cuva') { Čuvam… }
+        @case ('sacuvano') { ✓ Sačuvano }
+        @case ('greska') { Nije sačuvano }
+      }
+    </span>
+  </div>
+
+  @if (greska()) {
+    <div class="alert bad" role="alert">{{ greska() }}</div>
+  }
+
+  <!-- Istraživač: stanje čitanja sajta -->
+  <section class="card agent" aria-labelledby="agent-h">
+    <div class="row between">
+      <div>
+        <h2 id="agent-h" style="margin:0">🔎 Istraživač</h2>
+        @if (!brand()?.website) {
+          <p class="small muted">Brend nema sajt. Dodaj ga u <a [routerLink]="['/b', brandId(), 'podesavanja']">podešavanjima</a> i agent će predložiti odgovore.</p>
+        } @else {
+          @let j = istrazivanje();
+          @switch (j?.status) {
+            @case (undefined) {
+              <p class="small muted">Može da pročita {{ domen(brand()?.website) }} i predloži odgovore za upitnik.</p>
+            }
+            @case ('done') {
+              <p class="small">Pročitao {{ $any(j?.result)?.stranica }} stranica sa {{ domen(brand()?.website) }}: {{ $any(j?.result)?.cinjenica }} činjenica i {{ $any(j?.result)?.predloga }} predloga odgovora. Predlozi su ispod polja.</p>
+            }
+            @case ('failed') {
+              <p class="small" style="color:var(--bad)">Nije uspelo: {{ j?.error }}</p>
+            }
+            @default {
+              <p class="small">Čita {{ domen(brand()?.website) }}… (obično 1–2 minuta){{ j?.error ? ' · pokušava ponovo: ' + j?.error : '' }}</p>
+            }
+          }
+        }
+      </div>
+      @if (brand()?.website && ws.canEdit()) {
+        <button class="btn" type="button" (click)="procitajSajt()" [disabled]="stanjeIstrazivanja().radi">
+          {{ stanjeIstrazivanja().radi ? 'Čita…' : istrazivanje() ? 'Pročitaj ponovo' : 'Pročitaj sajt' }}
+        </button>
+      }
+    </div>
+  </section>
+
+  <div class="wrap">
+    <nav class="card grupe" aria-label="Grupe pitanja">
+      <ol>
+        @for (g of grupe; track g.kljuc) {
+          @let s = stanje(g);
+          <li>
+            <a [routerLink]="[]" [queryParams]="{ grupa: g.kljuc }" [class.on]="g === trenutna()" [attr.aria-current]="g === trenutna() ? 'step' : null">
+              <span>{{ g.naziv }}</span>
+              @if (s.preskoceno) {
+                <span class="small muted">preskočeno</span>
+              } @else if (s.gotovo) {
+                <span class="ok" aria-label="popunjeno">✓</span>
+              } @else if (s.ukupno) {
+                <span class="small muted">{{ s.popunjeno }}/{{ s.ukupno }}</span>
+              }
+            </a>
+          </li>
+        }
+      </ol>
+    </nav>
+
+    <section class="card forma" aria-labelledby="grupa-naslov">
+      @let g = trenutna();
+      <p class="small muted" style="margin:0">Korak {{ indeks() + 1 }} od {{ grupe.length }} · {{ g.naziv }}</p>
+      <h2 id="grupa-naslov" tabindex="-1" class="naslov">{{ g.naslov }}</h2>
+      <p class="sub" style="margin-bottom:16px">{{ g.opis }}</p>
+
+      @if (preskocene().has(g.kljuc)) {
+        <div class="alert info">Ova grupa je preskočena. <button class="btn small" type="button" (click)="vratiPreskoceno()">Ipak popuni</button></div>
+      }
+
+      @if (predloziGrupe().length > 1 && ws.canEdit()) {
+        <div class="row" style="margin-bottom:12px">
+          <button class="btn small" type="button" (click)="prihvatiSve()">Prihvati sve predloge za prazna polja ({{ predloziGrupe().length }})</button>
+        </div>
+      }
+
+      @if (g.kljuc === 'konkurencija') {
+        <div class="field">
+          <span class="label">Konkurenti</span>
+          <ul class="konkurenti">
+            @for (k of ob.competitors(); track k.id) {
+              @let st = stanjeKonkurenta(k.id);
+              <li>
+                <div class="row between">
+                  <b>{{ k.name || domen(k.url) }}</b>
+                  <span class="row">
+                    <span class="pill" [class]="'pill ' + st.klasa">{{ k.analysis && !st.radi ? 'proučen' : st.tekst }}</span>
+                    @if (ws.canEdit()) {
+                      <button class="btn small ghost" type="button" (click)="ob.ukloniKonkurenta(k.id)" [attr.aria-label]="'Ukloni ' + (k.name || k.url)">Ukloni</button>
+                    }
+                  </span>
+                </div>
+                <a class="small" [href]="k.url" target="_blank" rel="noopener">{{ k.url }}</a>
+                @if (k.analysis; as a) {
+                  <p class="small" style="margin:6px 0 0">{{ a.opis }}</p>
+                  @if (a.razlike.length) {
+                    <p class="small muted" style="margin:4px 0 0"><b>Gde možeš da se razlikuješ:</b> {{ a.razlike.join(' · ') }}</p>
+                  }
+                }
+              </li>
+            } @empty {
+              <li class="small muted">Još nema konkurenata.</li>
+            }
+          </ul>
+          @if (ws.canEdit()) {
+            <form class="row" (submit)="dodajKonkurenta($event)">
+              <label for="konk" class="sr-only">Sajt konkurenta</label>
+              <input id="konk" class="ulaz" placeholder="sajt konkurenta, npr. sportvision.rs" [value]="noviKonkurent()" (input)="noviKonkurent.set($any($event.target).value)" />
+              <button class="btn" type="submit">Dodaj i prouči</button>
+            </form>
+          }
+        </div>
+      }
+
+      @for (p of g.polja; track p.kljuc) {
+        <div class="field" [attr.role]="p.vrsta === 'izbor' || p.vrsta === 'vise_izbora' ? 'group' : null"
+             [attr.aria-labelledby]="p.vrsta === 'izbor' || p.vrsta === 'vise_izbora' ? 'lbl-' + p.kljuc : null">
+          @if (p.vrsta === 'izbor' || p.vrsta === 'vise_izbora') {
+            <span class="label" [id]="'lbl-' + p.kljuc">{{ p.pitanje }}@if (p.obavezno) {<span class="obavezno" aria-label="obavezno"> *</span>}</span>
+            <div class="opcije">
+              @for (o of p.opcije; track o) {
+                <label class="opt" [class.on]="izabrano(p, o)">
+                  @if (p.vrsta === 'izbor') {
+                    <input type="radio" [name]="p.kljuc" [checked]="izabrano(p, o)" [disabled]="!ws.canEdit()" (change)="postavi(p.kljuc, o)" />
+                  } @else {
+                    <input type="checkbox" [checked]="izabrano(p, o)" [disabled]="!ws.canEdit()" (change)="prebaciIzbor(p, o, $any($event.target).checked)" />
+                  }
+                  {{ o }}
+                </label>
+              }
+            </div>
+          } @else {
+            <label [for]="'f-' + p.kljuc">{{ p.pitanje }}@if (p.obavezno) {<span class="obavezno" aria-label="obavezno"> *</span>}</label>
+            @if (p.vrsta === 'dugi_tekst') {
+              <textarea [id]="'f-' + p.kljuc" rows="3" [value]="tekst(p)" [placeholder]="p.primer ?? ''" [readonly]="!ws.canEdit()"
+                        [attr.aria-describedby]="p.pomoc ? 'h-' + p.kljuc : null" (input)="postavi(p.kljuc, $any($event.target).value)"></textarea>
+            } @else {
+              <input [id]="'f-' + p.kljuc" [value]="tekst(p)" [placeholder]="p.primer ?? ''" [readonly]="!ws.canEdit()"
+                     [attr.aria-describedby]="p.pomoc ? 'h-' + p.kljuc : null" (input)="postavi(p.kljuc, $any($event.target).value)" />
+            }
+          }
+          @if (p.pomoc) {
+            <span class="hint" [id]="'h-' + p.kljuc">{{ p.pomoc }}</span>
+          }
+          @if (predlogZa(p); as s) {
+            <div class="predlog">
+              <div><b>Predlog sa sajta:</b> {{ prikazPredloga(s) }}</div>
+              @if (s.razlog) {
+                <div class="small muted">{{ s.razlog }}@if (s.izvor) { · <a [href]="s.izvor" target="_blank" rel="noopener">izvor</a>}</div>
+              }
+              @if (ws.canEdit()) {
+                <button class="btn small" type="button" (click)="prihvati(p)">{{ popunjenoPolje(p) ? 'Zameni ovim' : 'Prihvati' }}</button>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <div class="row between dno">
+        <button class="btn ghost" type="button" (click)="idi(grupe[indeks() - 1])" [disabled]="indeks() === 0">← Nazad</button>
+        <div class="row">
+          @if (ws.canEdit() && !preskocene().has(g.kljuc)) {
+            <button class="btn ghost" type="button" (click)="preskoci()">Preskoči za sada</button>
+          }
+          <button class="btn primary" type="button" (click)="idi(grupe[indeks() + 1])">
+            {{ indeks() === grupe.length - 1 ? 'Dalje: razgovor sa agentom →' : 'Dalje: ' + grupe[indeks() + 1]!.naziv + ' →' }}
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

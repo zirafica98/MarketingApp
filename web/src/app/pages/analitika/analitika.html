@@ -1,0 +1,142 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Analitika</h1>
+      <p class="sub">{{ ws.brand(brandId())?.name }} · poslednjih {{ dani() }} dana, u odnosu na prethodnih {{ dani() }}. Sve se poredi sa prosekom ovog brenda.</p>
+    </div>
+    <div class="row">
+      <div class="seg" role="group" aria-label="Period">
+        @for (d of [7, 28, 90]; track d) {
+          <button type="button" [attr.aria-pressed]="dani() === d" (click)="dani.set($any(d))">{{ d }} d</button>
+        }
+      </div>
+      @if (kanali().length > 1) {
+        <div class="seg" role="group" aria-label="Kanal">
+          <button type="button" [attr.aria-pressed]="kanal() === 'sve'" (click)="kanal.set('sve')">Svi kanali</button>
+          @for (k of kanali(); track k) {
+            <button type="button" [attr.aria-pressed]="kanal() === k" (click)="kanal.set(k)">{{ k }}</button>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (ucitano() && !sve().length) {
+    <div class="empty">
+      <p><b>Još nema podataka.</b></p>
+      <p>Poveži Instagram u <a [routerLink]="['/b', brandId(), 'konektori']">konektorima</a>: uvlačimo poslednjih 6 meseci objava i statistike.</p>
+    </div>
+  } @else if (ucitano()) {
+    <div class="grid kpi4">
+      <div class="card kpi">
+        <p class="small muted">Pratioci</p>
+        <div class="v">{{ pratioci()?.sada ?? '—' | number: '1.0-0' : 'sr' }}</div>
+        @if (pratioci(); as p) {
+          <div class="small" [class.up]="p.promena >= 0" [class.down]="p.promena < 0">{{ p.promena >= 0 ? '▲ +' : '▼ ' }}{{ p.promena }} u periodu</div>
+        }
+      </div>
+      <div class="card kpi">
+        <p class="small muted">Doseg objava</p>
+        <div class="v">{{ s().doseg | number: '1.0-0' : 'sr' }}</div>
+        @if (promena(s().doseg, sPre().doseg); as p) { <div class="small" [class]="p.klasa">{{ p.tekst }}</div> }
+      </div>
+      <div class="card kpi">
+        <p class="small muted">Prosečan doseg po objavi</p>
+        <div class="v">{{ s().prosekDosega | number: '1.0-0' : 'sr' }}</div>
+        <div class="small muted">{{ s().objava }} objava u periodu</div>
+      </div>
+      <div class="card kpi">
+        <p class="small muted">Angažovanje</p>
+        <div class="v">{{ s().angazmanProcenat | number: '1.1-1' : 'sr' }}%</div>
+        <div class="small muted">lajkovi, komentari, čuvanja i deljenja / doseg</div>
+      </div>
+    </div>
+
+    <div class="grid dva" style="margin-top:16px">
+      <section class="card" aria-labelledby="graf-h">
+        <h2 id="graf-h">Doseg po danu objave</h2>
+        <svg class="graf" viewBox="0 0 600 150" preserveAspectRatio="none" role="img" [attr.aria-label]="'Doseg po danu, najviše ' + graf().max">
+          <polyline fill="none" stroke="#4b3fd1" stroke-width="2.5" [attr.points]="graf().tacke" vector-effect="non-scaling-stroke" />
+        </svg>
+        <div class="row between small muted"><span>{{ graf().kofe[0]?.dan | date: 'd. M.' }}</span><span>danas</span></div>
+      </section>
+
+      <section class="card" aria-labelledby="format-h">
+        <h2 id="format-h">Šta radi za ovaj brend: format</h2>
+        <p class="small muted" style="margin-top:-6px">Odnos prema proseku brenda (1× = prosek)</p>
+        <ul class="trake">
+          @for (g of poFormatu(); track g.grupa) {
+            <li>
+              <span class="naziv">{{ nazivFormata[g.grupa] ?? g.grupa }} <span class="muted">({{ g.n }})</span></span>
+              <span class="traka-wrap">
+                <span class="traka doseg" [style.width.%]="(g.odnosDosega / maxOdnos()) * 100"></span>
+                <span class="traka cuv" [style.width.%]="(g.odnosCuvanja / maxOdnos()) * 100"></span>
+              </span>
+              <span class="small">doseg {{ g.odnosDosega | number: '1.1-1' : 'sr' }}× · čuvanja {{ g.odnosCuvanja | number: '1.1-1' : 'sr' }}×</span>
+            </li>
+          }
+        </ul>
+        <p class="small muted legenda"><span class="kv doseg"></span> doseg <span class="kv cuv"></span> čuvanja na 1000 dosega</p>
+      </section>
+    </div>
+
+    @if (poStubu().length || poVremenu().length) {
+      <div class="grid dva" style="margin-top:16px">
+        @if (poStubu().length) {
+          <section class="card"><h2>Po temi (stubu)</h2>
+            <table class="tbl"><thead><tr><th>Stub</th><th>Objava</th><th>Doseg</th><th>Čuvanja</th></tr></thead><tbody>
+              @for (g of poStubu(); track g.grupa) {
+                <tr><td>{{ g.grupa }}</td><td>{{ g.n }}</td><td>{{ g.odnosDosega | number: '1.1-1' : 'sr' }}×</td><td>{{ g.odnosCuvanja | number: '1.1-1' : 'sr' }}×</td></tr>
+              }
+            </tbody></table>
+          </section>
+        }
+        @if (poVremenu().length) {
+          <section class="card"><h2>Po vremenu objave</h2>
+            <table class="tbl"><thead><tr><th>Deo dana</th><th>Objava</th><th>Doseg</th><th>Angažovanje</th></tr></thead><tbody>
+              @for (g of poVremenu(); track g.grupa) {
+                <tr><td>{{ g.grupa }}</td><td>{{ g.n }}</td><td>{{ g.odnosDosega | number: '1.1-1' : 'sr' }}×</td><td>{{ g.angazmanProcenat | number: '1.1-1' : 'sr' }}%</td></tr>
+              }
+            </tbody></table>
+          </section>
+        }
+      </div>
+    }
+
+    <section class="card" style="margin-top:16px" aria-labelledby="objave-h">
+      <div class="row between">
+        <h2 id="objave-h" style="margin:0">Objave</h2>
+        <label class="small">Sortiraj:
+          <select [value]="sortiraj()" (change)="sortiraj.set($any($event.target).value)">
+            <option value="datum">najnovije</option><option value="doseg">doseg</option><option value="cuvanja">čuvanja</option>
+          </select>
+        </label>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="tbl">
+          <thead><tr><th scope="col">Objava</th><th scope="col">Format</th><th scope="col">Objavljeno</th><th scope="col">Doseg</th><th scope="col">Čuvanja</th><th scope="col">Lajkovi</th><th scope="col">Komentari</th><th scope="col">U odnosu na prosek</th></tr></thead>
+          <tbody>
+            @for (o of tabela(); track o.id) {
+              <tr>
+                <td>
+                  @if (o.permalink) { <a [href]="o.permalink" target="_blank" rel="noopener">{{ skrati(o.caption) }}</a> } @else { {{ skrati(o.caption) }} }
+                </td>
+                <td>{{ nazivFormata[o.format ?? ''] ?? o.format }}</td>
+                <td>{{ o.published_at | date: 'd. M. HH:mm' }}</td>
+                <td>{{ o.reach ?? '—' | number: '1.0-0' : 'sr' }}</td>
+                <td>{{ o.saves ?? '—' }}</td>
+                <td>{{ o.likes ?? '—' }}</td>
+                <td>{{ o.comments ?? '—' }}</td>
+                <td><span class="pill" [class.ok]="o.odnos >= 1.2" [class.bad]="o.odnos < 0.7">{{ o.odnos >= 1 ? '▲' : '▼' }} {{ o.odnos | number: '1.1-1' : 'sr' }}×</span></td>
+              </tr>
+            } @empty {
+              <tr><td colspan="8" class="muted">Nema objava u ovom periodu.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  } @else {
+    <p class="muted">Učitavam…</p>
+  }
+</div>

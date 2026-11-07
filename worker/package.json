@@ -10,10 +10,13 @@
     "start": "node src/index.ts",
     "dev": "node --watch src/index.ts",
     "check": "tsc --noEmit",
-    "test": "node --test src/**/*.test.ts"
+    "test": "node --test \"src/**/*.test.ts\""
   },
   "dependencies": {
-    "pg": "^8.23.1"
+    "@anthropic-ai/sdk": "^1.6.0",
+    "@supabase/supabase-js": "^2.119.0",
+    "pg": "^8.23.1",
+    "playwright-core": "^1.65.0"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

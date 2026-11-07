@@ -19,6 +19,7 @@ export const ROLE_OPIS: Record<Role, string> = {
 export interface Workspace {
   id: string;
   name: string;
+  plan: string;
   role: Role;
   brand_ids: string[] | null;
 }
@@ -60,6 +61,7 @@ export interface Job {
   id: string;
   brand_id: string | null;
   type: string;
+  payload?: Record<string, unknown>;
   status: JobStatus;
   result: unknown;
   error: string | null;

@@ -1,8 +1,15 @@
 // Registar poslova. Novi tip posla: dodaj rukovaoca ovde i tip u public.enqueue_job (migracija).
 
 import type pg from 'pg';
-import { AiError, providerFor, type AskRequest, type AskResult } from '../ai/index.ts';
+import { aiZa, AiError, type AskRequest, type AskResult } from '../ai/index.ts';
 import { logAgentRun, type Job } from '../db.ts';
+import { brandCompetitor, brandInterview, brandProfile, brandResearch } from './brand.ts';
+import { channelSync } from './channels.ts';
+import { draftGenerate, draftsWeek } from './drafts.ts';
+import { publishDraft } from './publish.ts';
+import { brandStrategy } from './strategy.ts';
+import { brandLearn } from './learn.ts';
+import { campaignPlan } from './campaign.ts';
 
 export interface JobContext {
   db: pg.Pool;
@@ -56,15 +63,31 @@ const handlers: Record<string, JobHandler> = {
   },
 };
 
+Object.assign(handlers, {
+  'brand.research': brandResearch,
+  'brand.competitor': brandCompetitor,
+  'brand.interview': brandInterview,
+  'brand.profile': brandProfile,
+  'channel.sync': channelSync,
+  'brand.strategy': brandStrategy,
+  'drafts.week': draftsWeek,
+  'draft.generate': draftGenerate,
+  'publish.draft': publishDraft,
+  'brand.learn': brandLearn,
+  'campaign.plan': campaignPlan,
+} satisfies Record<string, JobHandler>);
+
 export async function runJob(db: pg.Pool, job: Job): Promise<unknown> {
   const handler = handlers[job.type];
   if (!handler) throw new JobError(`Worker ne zna posao „${job.type}“.`);
-  const provider = providerFor(job.workspace_id);
+  const { provider, modeli } = await aiZa(db, job.workspace_id);
 
   const ask = async <T>(req: AskRequest): Promise<AskResult<T>> => {
     const base = { job_id: job.id, workspace_id: job.workspace_id, brand_id: job.brand_id, agent: req.agent, provider: provider.name };
     try {
-      const res = await provider.ask<T>(req);
+      // model po agentu iz podešavanja radnog prostora (npr. „pisac“ ili „strateg.kampanja“ → „strateg“)
+      const izbor = modeli[req.agent.split('.')[0]!];
+      const res = await provider.ask<T>(izbor ? { ...req, model: izbor } : req);
       await logAgentRun(db, {
         ...base, model: res.model, input_tokens: res.inputTokens, output_tokens: res.outputTokens,
         cost_usd: res.costUsd, duration_ms: res.durationMs, error: null,

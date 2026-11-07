@@ -1,6 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { Supabase } from '../../core/supabase';
 import { WorkspaceState } from '../../core/workspace';
+
+type StanjeProfila = 'nema' | 'predlog' | 'potvrdjen';
 
 @Component({
   selector: 'app-brendovi',
@@ -41,7 +44,11 @@ import { WorkspaceState } from '../../core/workspace';
                 }
                 <span class="pill warn">Konektori: Faza 2</span>
               </div>
-              <div class="small muted">Onboarding: počinje u Fazi 1 (upitnik i proučavanje)</div>
+              @switch (profili()[b.id]) {
+                @case ('potvrdjen') { <div class="small" style="color:var(--ok)">✓ Brend profil potvrđen</div> }
+                @case ('predlog') { <a class="small" [routerLink]="['/b', b.id, 'profil']">Brend profil čeka potvrdu →</a> }
+                @default { <a class="small" [routerLink]="['/b', b.id, 'upitnik']">Nastavi onboarding →</a> }
+              }
             </li>
           }
         </ul>
@@ -57,6 +64,18 @@ import { WorkspaceState } from '../../core/workspace';
 })
 export default class Brendovi {
   protected readonly ws = inject(WorkspaceState);
+  private readonly sb = inject(Supabase).client;
+  protected readonly profili = signal<Record<string, StanjeProfila>>({});
+
+  constructor() {
+    effect(() => {
+      const ids = this.ws.brands().map((b) => b.id);
+      if (!ids.length) return;
+      void this.sb.from('brand_profiles').select('brand_id, summary_status').in('brand_id', ids).then(({ data }) => {
+        this.profili.set(Object.fromEntries((data ?? []).map((r) => [r.brand_id as string, r.summary_status as StanjeProfila])));
+      });
+    });
+  }
 
   protected broj(n: number): string {
     const m10 = n % 10, m100 = n % 100;

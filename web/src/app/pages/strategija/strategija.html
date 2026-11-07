@@ -1,0 +1,112 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Strategija</h1>
+      <p class="sub">{{ ws.brand(brandId())?.name }} · predlog agenta Strateg na osnovu profila, činjenica i brojki ovog brenda.
+        @if (prikaz(); as s) {
+          @if (s.status === 'aktivna') { <span class="pill ok">Aktivna od {{ s.accepted_at | date: 'd. M. y.' }}</span> }
+          @else { <span class="pill warn">Predlog — pregledaj i prihvati</span> }
+        }
+      </p>
+    </div>
+    @if (aktivna() && ws.canEdit()) {
+      <div class="row">
+        <a class="btn" [routerLink]="['/b', brandId(), 'za-pregled']">Za pregled →</a>
+        <button class="btn primary" type="button" (click)="nacrtiNedelje()" [disabled]="posaoNedelje().radi">
+          {{ posaoNedelje().radi ? 'Pravi nacrte…' : 'Napravi nacrte za sledeću nedelju' }}
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (greska()) { <div class="alert bad" role="alert">{{ greska() }}</div> }
+  @if (poruka()) { <div class="alert ok" role="status">{{ poruka() }}</div> }
+  @if (posaoStrategije().radi) {
+    <div class="alert info" role="status">Strateg radi na strategiji (obično 1–2 minuta)…</div>
+  }
+  @if (posaoStrategije().tekst === 'nije uspelo' && !posaoStrategije().radi) {
+    <div class="alert bad">Poslednji pokušaj nije uspeo: {{ poslovi()[0]?.error }}</div>
+  }
+
+  @if (ucitano() && !prikaz() && !posaoStrategije().radi) {
+    <div class="empty">
+      <p><b>Još nema strategije.</b></p>
+      <p>Strateg je pravi iz brend profila, potvrđenih činjenica i statistike sa kanala.</p>
+      @if (ws.canEdit()) { <button class="btn primary" type="button" (click)="napravi()">Napravi strategiju</button> }
+    </div>
+  }
+
+  @if (prikaz(); as s) {
+    @let c = s.content;
+    <section class="card" aria-labelledby="rev-h">
+      <h2 id="rev-h">Revizija: kako stojimo</h2>
+      <p>{{ c.revizija.stanje }}</p>
+      <div class="grid g3">
+        <div><h3>Brojke</h3><ul>@for (x of c.revizija.brojke; track $index) { <li>{{ x }}</li> }</ul></div>
+        <div><h3>Jake strane</h3><ul>@for (x of c.revizija.jake_strane; track $index) { <li>{{ x }}</li> }</ul></div>
+        <div><h3>Slabosti</h3><ul>@for (x of c.revizija.slabosti; track $index) { <li>{{ x }}</li> }</ul></div>
+      </div>
+    </section>
+
+    <div class="grid g2" style="margin-top:16px">
+      <section class="card" aria-labelledby="stub-h">
+        <h2 id="stub-h">Stubovi sadržaja</h2>
+        @for (st of c.stubovi; track st.kljuc) {
+          <div class="stub" [style.border-color]="boje[$index % boje.length]">
+            <div class="row between"><h3 style="margin:0">{{ st.naziv }}</h3><span class="pill">{{ st.udeo }}%</span></div>
+            <p class="small muted" style="margin:4px 0">{{ st.opis }}</p>
+            @if (st.primeri.length) { <p class="small" style="margin:0">Primeri: {{ st.primeri.join(' · ') }}</p> }
+          </div>
+        }
+      </section>
+      <section class="card" aria-labelledby="eksp-h">
+        <h2 id="eksp-h">Eksperimenti</h2>
+        @for (e of c.eksperimenti; track e.kljuc) {
+          <div class="eksp">
+            <h3>{{ e.naziv }} <span class="small muted">· {{ e.trajanje_nedelja }} ned.</span></h3>
+            <p class="small" style="margin:2px 0">{{ e.hipoteza }}</p>
+            <p class="small muted" style="margin:2px 0">Meri se: {{ e.metrika }}</p>
+            @for (v of e.varijante; track v.kljuc) { <p class="small" style="margin:2px 0"><span class="pill ac">{{ v.kljuc }}</span> {{ v.uputstvo }}</p> }
+          </div>
+        } @empty { <p class="small muted">Nema eksperimenata.</p> }
+        @if (c.napomene) { <p class="small muted">{{ c.napomene }}</p> }
+      </section>
+    </div>
+
+    <section class="card" style="margin-top:16px" aria-labelledby="ras-h">
+      <h2 id="ras-h">Nedeljni raspored</h2>
+      <div class="nedelja">
+        @for (d of dani; track d.k) {
+          <div class="dan">
+            <b>{{ d.n }}</b>
+            @for (t of terminiDana(c, d.k); track $index) {
+              @let st = stub(c, t.stub);
+              <div class="termin" [style.border-left-color]="st.boja">
+                <span class="small"><b>{{ t.vreme }}</b> · {{ t.format }}</span>
+                <span class="small">{{ st.naziv }}</span>
+                <span class="small muted">{{ t.kanali.map(nazivKanala).join(', ') }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </section>
+
+    @if (ws.canEdit()) {
+      <section class="card" style="margin-top:16px">
+        @if (s.status === 'predlog') {
+          <div class="row">
+            <button class="btn primary" type="button" (click)="prihvati(s.id)">Prihvati strategiju</button>
+            @if (aktivna()) { <span class="small muted">Zameniće trenutno aktivnu strategiju.</span> }
+          </div>
+          <hr />
+        }
+        <div class="field">
+          <label for="nap">Traži drugu verziju (napiši šta da promeni)</label>
+          <textarea id="nap" rows="2" placeholder="npr. „manje objava, više reelova, bez nedelje“" [value]="napomena()" (input)="napomena.set($any($event.target).value)"></textarea>
+        </div>
+        <button class="btn" type="button" (click)="napravi()" [disabled]="posaoStrategije().radi">Napravi novu verziju</button>
+      </section>
+    }
+  }
+</div>

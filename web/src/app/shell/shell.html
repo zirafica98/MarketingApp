@@ -8,7 +8,7 @@
 </header>
 
 <aside id="meni">
-  <div class="logo side-logo"><i aria-hidden="true">✦</i> Marketing Pilot</div>
+  <div class="row between side-logo"><div class="logo"><i aria-hidden="true">✦</i> Marketing Pilot</div><app-obavestenja /></div>
 
   @if (ws.workspaces().length > 1) {
     <div class="field compact">
@@ -58,7 +58,10 @@
     }
 
     <div class="sec">Radni prostor</div>
+    <a routerLink="/kalendar" routerLinkActive="on" ariaCurrentWhenActive="page">🗓 Kalendar svih brendova</a>
     <a routerLink="/tim" routerLinkActive="on" ariaCurrentWhenActive="page">👥 Tim i uloge</a>
+    <a routerLink="/ai" routerLinkActive="on" ariaCurrentWhenActive="page">🤖 AI i agenti</a>
+    <a routerLink="/plan" routerLinkActive="on" ariaCurrentWhenActive="page">💳 Plan i potrošnja</a>
   </nav>
 
   <div class="me">
@@ -73,4 +76,5 @@
 
 <main id="sadrzaj" tabindex="-1">
   <router-outlet />
+  <footer class="podnozje small muted"><a routerLink="/privatnost">Privatnost</a> · <a routerLink="/uslovi">Uslovi</a></footer>
 </main>
